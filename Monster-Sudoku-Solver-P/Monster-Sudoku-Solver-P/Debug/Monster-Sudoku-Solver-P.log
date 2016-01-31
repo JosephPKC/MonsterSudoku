@@ -1,0 +1,7 @@
+﻿  sudokusolver.cpp
+d:\files\school\irvine\winter 2016\intro artificial intelligence\cs 171 project\monster-sudoku-solver\monster-sudoku-solver-p\monster-sudoku-solver-p\sudokusolver.cpp(270): warning C4018: '<': signed/unsigned mismatch
+d:\files\school\irvine\winter 2016\intro artificial intelligence\cs 171 project\monster-sudoku-solver\monster-sudoku-solver-p\monster-sudoku-solver-p\sudokusolver.cpp(271): warning C4018: '<': signed/unsigned mismatch
+d:\files\school\irvine\winter 2016\intro artificial intelligence\cs 171 project\monster-sudoku-solver\monster-sudoku-solver-p\monster-sudoku-solver-p\sudokusolver.cpp(322): warning C4018: '<': signed/unsigned mismatch
+d:\files\school\irvine\winter 2016\intro artificial intelligence\cs 171 project\monster-sudoku-solver\monster-sudoku-solver-p\monster-sudoku-solver-p\sudokusolver.cpp(323): warning C4018: '<': signed/unsigned mismatch
+d:\files\school\irvine\winter 2016\intro artificial intelligence\cs 171 project\monster-sudoku-solver\monster-sudoku-solver-p\monster-sudoku-solver-p\sudokusolver.cpp(380): warning C4018: '<': signed/unsigned mismatch
+  Monster-Sudoku-Solver-P.vcxproj -> D:\Files\School\IRVINE\Winter 2016\Intro Artificial Intelligence\CS 171 Project\Monster-Sudoku-Solver\Monster-Sudoku-Solver-P\Debug\Monster-Sudoku-Solver-P.exe
