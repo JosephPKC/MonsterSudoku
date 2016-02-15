@@ -146,13 +146,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bookkeeper.cpp" />
+    <ClCompile Include="logger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="sudokugenerator.cpp" />
+    <ClCompile Include="sudokupuzzle.cpp" />
     <ClCompile Include="sudokureader.cpp" />
     <ClCompile Include="sudokusolver.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bookkeeper.h" />
+    <ClInclude Include="logger.h" />
     <ClInclude Include="sudokugenerator.h" />
+    <ClInclude Include="sudokupuzzle.h" />
     <ClInclude Include="sudokureader.h" />
     <ClInclude Include="sudokusolver.h" />
   </ItemGroup>

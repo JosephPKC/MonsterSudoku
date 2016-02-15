@@ -25,7 +25,7 @@ public:
     char* getInputFileName () const;
     char* getOutputFileName () const;
 
-    char** SudokuReader::loadSudoku (int& m, int& n, int& p, int& q, long timeout);
+    char** loadSudoku (int& m, int& n, int& p, int& q, long timeout);
     char** loadSudoku (int& n, int& p, int& q, long timeout);
     void saveSudoku (int m, int n, int p, int q, char **sudoku, char e);
 };

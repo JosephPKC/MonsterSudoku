@@ -27,6 +27,15 @@
     <ClCompile Include="sudokusolver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="bookkeeper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="logger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sudokupuzzle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sudokugenerator.h">
@@ -36,6 +45,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="sudokusolver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bookkeeper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sudokupuzzle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
