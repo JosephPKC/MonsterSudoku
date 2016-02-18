@@ -116,45 +116,20 @@ int main(int argc, char *argv[]) {
 //    };
     int m = 0,n = 0,p = 0,q = 0;
     long timeout = 300;
-    char* inputFileName = "input.txt";
-    char* outputFileName = "output.txt";
+//    char* inputFileName = "input.txt";
+//    char* outputFileName = "output.txt";
+    char* inputFileName;
+    char* outputFileName;
     vector<char*> options;
-    if (argc >= 3) {
-        inputFileName = argv[0];
-        outputFileName = argv[1];
-        timeout = atol(argv[2]);
-        int opNum = argc - 3;
+    if (argc >= 4) {
+        inputFileName = argv[1];
+        outputFileName = argv[2];
+        timeout = atol(argv[3]);
+        int opNum = argc - 4;
         for (std::size_t i = 0; (std::size_t)i < (std::size_t)opNum; ++i) {
-            options[i] = argv[3 + i];
+            options[i] = argv[4 + i];
         }
     }
-//    SudokuSolver S;
-//    S.setFlag(HeuristicFlag::kFC,true);
-//    for (int i = 0; i < 61; ++i) {
-////        SudokuReader R (inputFileName,"");
-//        SudokuReader R(inputFiles[i],"");
-//        char** sudoku = R.loadSudoku(n,p,q,timeout);
-//        cout << "Sudoku Puzzle: " << inputFiles[i] << " @ i=" << i << " with parameters:\n"
-////             << "m: " << m << endl
-//             << "n: " << n << endl
-//             << "p: " << p << endl
-//             << "q: " << q << endl;
-//        char e = '0';
-//    //    cout << "Creating Sudoku Puzzle" << endl;
-//        SudokuPuzzle P (sudoku,m,n,p,q);
-//        cout << "Initial Puzzle~\n";
-//        P.display ();
-//    //    cout << "Solving" << endl;
-//        LogBundle B = S.solve(P,timeout,e);
-//    //    cout << "Creating Logger" << endl;
-//        Logger L(B);
-//        L.logInfo(outputFileName);
-//        cout << "Finished Puzzle~\n";
-//        P.display ();
-//        cout << "Output Info~\n";
-//        L.printInfo();
-//        cin.get();
-//    }
     SudokuSolver S;
     for (std::size_t i = 0; i < (std::size_t)options.size(); ++i) {
         if (options[i] == "FC"){
@@ -187,6 +162,6 @@ int main(int argc, char *argv[]) {
     P.display ();
     cout << "Output Info~\n";
     L.printInfo();
-    cin.get();
+ //   cin.get();
     return 0;
 }
