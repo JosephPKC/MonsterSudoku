@@ -51,127 +51,171 @@ using namespace std;
 //Generate log for solution
 //If at any time the runtime is longer than timeout, then end for generation and for solving
 int main(int argc, char *argv[]) {
-//    char* inputFiles[61] = {
-//        "input.txt",
-//        "PE1.txt",
-//        "PE2.txt",
-//        "PE3.txt",
-//        "PE4.txt",
-//        "PE5.txt",
-//        "PE6.txt",
-//        "PE7.txt",
-//        "PE8.txt",
-//        "PE9.txt",
-//        "PE10.txt",
-//        "PE11.txt",
-//        "PE12.txt",
-//        "PE13.txt",
-//        "PE14.txt",
-//        "PE15.txt",
-//        "PE16.txt",
-//        "PE17.txt",
-//        "PE18.txt",
-//        "PE19.txt",
-//        "PE20.txt",
-//        "PE21.txt",
-//        "PE22.txt",
-//        "PE23.txt",
-//        "PE24.txt",
-//        "PE25.txt",
-//        "PE26.txt",
-//        "PE27.txt",
-//        "PE28.txt",
-//        "PE29.txt",
-//        "PE30.txt",
-//        "PE31.txt",
-//        "PE32.txt",
-//        "PE33.txt",
-//        "PE34.txt",
-//        "PE35.txt",
-//        "PE36.txt",
-//        "PE37.txt",
-//        "PE38.txt",
-//        "PE39.txt",
-//        "PE40.txt",
-//        "PE41.txt",
-//        "PE42.txt",
-//        "PE43.txt",
-//        "PE44.txt",
-//        "PE45.txt",
-//        "PE46.txt",
-//        "PE47.txt",
-//        "PE48.txt",
-//        "PE49.txt",
-//        "PE50.txt",
-//        "PH1.txt",
-//        "PH2.txt",
-//        "PH3.txt",
-//        "PH4.txt",
-//        "PH5.txt",
-//        "PM1.txt",
-//        "PM2.txt",
-//        "PM3.txt",
-//        "PM4.txt",
-//        "PM5.txt"
-//    };
+    char* inputFiles[61] = {
+        "input.txt",
+        "PE1.txt",
+        "PE2.txt",
+        "PE3.txt",
+        "PE4.txt",
+        "PE5.txt",
+        "PE6.txt",
+        "PE7.txt",
+        "PE8.txt",
+        "PE9.txt",
+        "PE10.txt",
+        "PE11.txt",
+        "PE12.txt",
+        "PE13.txt",
+        "PE14.txt",
+        "PE15.txt",
+        "PE16.txt",
+        "PE17.txt",
+        "PE18.txt",
+        "PE19.txt",
+        "PE20.txt",
+        "PE21.txt",
+        "PE22.txt",
+        "PE23.txt",
+        "PE24.txt",
+        "PE25.txt",
+        "PE26.txt",
+        "PE27.txt",
+        "PE28.txt",
+        "PE29.txt",
+        "PE30.txt",
+        "PE31.txt",
+        "PE32.txt",
+        "PE33.txt",
+        "PE34.txt",
+        "PE35.txt",
+        "PE36.txt",
+        "PE37.txt",
+        "PE38.txt",
+        "PE39.txt",
+        "PE40.txt",
+        "PE41.txt",
+        "PE42.txt",
+        "PE43.txt",
+        "PE44.txt",
+        "PE45.txt",
+        "PE46.txt",
+        "PE47.txt",
+        "PE48.txt",
+        "PE49.txt",
+        "PE50.txt",
+        "PH1.txt",
+        "PH2.txt",
+        "PH3.txt",
+        "PH4.txt",
+        "PH5.txt",
+        "PM1.txt",
+        "PM2.txt",
+        "PM3.txt",
+        "PM4.txt",
+        "PM5.txt"
+    };
     int m = 0,n = 0,p = 0,q = 0;
     long timeout = 300;
-//    char* inputFileName = "input.txt";
-//    char* outputFileName = "output.txt";
-//	cout << "Begin" << endl;
-    char* inputFileName;
-    char* outputFileName;
+    char* inputFileName = "input.txt";
+    char* outputFileName = "output.txt";
+//    char* inputFileName;
+//    char* outputFileName;
     vector<char*> options;
-	//cout << "Begin cl arg grab" << endl;
     if (argc >= 4) {
-		//cout << "argc >= 3" << endl;
         inputFileName = argv[1];
-		//cout << "Got input file@0=" << inputFileName << " vs " << argv[0] << endl;
         outputFileName = argv[2];
-		//cout << "Got outputfile@1=" << outputFileName << " vs " << argv[1] << endl;
         timeout = atol(argv[3]);
-		//cout << "Got timeout@2=" << timeout << " vs " << argv[2] << endl;
         int opNum = argc - 4;
-		//cout << "opNum=" << opNum << endl;
         for (std::size_t i = 0; (std::size_t)i < (std::size_t)opNum; ++i) {
-			cout << "i=" << i << " Token=" << argv[4+i] << endl;
-            options[i] = argv[4 + i];
+            options.insert(options.end(),argv[4 + i]);
         }
     }
-	//cout << "Creating SudokuSolver" << endl;
     SudokuSolver S;
     for (std::size_t i = 0; i < (std::size_t)options.size(); ++i) {
-        if (options[i] == "FC"){
+		//cout << options[i] << endl;
+		std::string option(options[i]);
+		//cout << "Setting...";
+        if (option == "FC"){
+			//cout << "FC" << endl;
             S.setFlag(HeuristicFlag::kFC,true);
         }
+        else if (option == "MRV"){
+			//cout << "MRV" << endl;
+            S.setFlag(HeuristicFlag::kMRV,true);
+        }
+        else if (option == "DH") {
+			//cout << "DH" << endl;
+            S.setFlag(HeuristicFlag::kDH,true);
+        }
+        else if (option == "LCV") {
+			//cout << "LCV" << endl;
+            S.setFlag(HeuristicFlag::kLCV,true);
+        }
+        else if (option == "MAC") {
+			//cout << "MAC" << endl;
+            S.setFlag(HeuristicFlag::kMAC,true);
+        }
+        else if (option == "ACP") {
+			//cout << "ACP" << endl;
+            S.setFlag(HeuristicFlag::kACP,true);
+        }
         else {
-
+			//cout << "None" << endl;
         }
     }
-	//cout << "Finished getting inputs" << endl;
+//    S.setFlag(HeuristicFlag::kMRV,true);
+//    S.setFlag(HeuristicFlag::kDH,true);
+//    S.setFlag(HeuristicFlag::kACP,true);
+//    S.setFlag(HeuristicFlag::kLCV,true);
+//    S.setFlag(HeuristicFlag::kMAC,true);
+//    S.setFlag(HeuristicFlag::kFC,true);
+    int stop = 1;
+//    int stop = 61;
+//    int stop = 5;
+    for (int i = 0; i < stop; ++i) {
+            SudokuReader R (inputFileName,outputFileName);
+        //    SudokuReader R(inputFiles[i],"");
+            char** sudoku = R.loadSudoku(n,p,q,timeout);
+            cout << "Sudoku Puzzle: " << inputFiles[i] << " @ i=" << i << " with parameters:\n"
+        //    cout
+        //             << "m: " << m << endl
+                 << "n: " << n << endl
+                 << "p: " << p << endl
+                 << "q: " << q << endl;
+            char e = '0';
+        //    cout << "Creating Sudoku Puzzle" << endl;
+            SudokuPuzzle P (sudoku,m,n,p,q);
+            cout << "Initial Puzzle~\n";
+            P.display ();
+        //    cout << "Solving" << endl;
+            LogBundle B = S.solve(P,timeout,e);
+        //    cout << "Creating Logger" << endl;
+            Logger L(B);
+            L.logInfo(outputFileName);
+            cout << "Finished Puzzle~\n";
+            P.display ();
+            cout << "Output Info~\n";
+            L.printInfo();
+//            cin.get();
+    }
 
-    SudokuReader R (inputFileName,outputFileName);
-//    SudokuReader R(inputFiles[i],"");
-    char** sudoku = R.loadSudoku(n,p,q,timeout);
-//    cout << "Sudoku Puzzle: " << inputFiles[i] << " @ i=" << i << " with parameters:\n"
-//             << "m: " << m << endl
-       cout << "n: " << n << endl
-         << "p: " << p << endl
-         << "q: " << q << endl;
-    char e = '0';
-//    cout << "Creating Sudoku Puzzle" << endl;
-    SudokuPuzzle P (sudoku,m,n,p,q);
-    cout << "Initial Puzzle~\n";
-    P.display ();
-//    cout << "Solving" << endl;
-    LogBundle B = S.solve(P,timeout,e);
-//    cout << "Creating Logger" << endl;
-    Logger L(B);
-    L.logInfo(outputFileName);
-    cout << "Finished Puzzle~\n";
-    P.display ();
-    cout << "Output Info~\n";
-    L.printInfo();
-//    cin.get();
     return 0;
 }
+
+//Fix DH (Might be getting stuck)
+//-When failing and backtracking, it gets stuck picking the same variables over and over
+//Implement and Fix LCV
+//Implement ACP - Do this first (Should be easy)
+//Implement and Fix MRV
+//Fix MRV + DH
+//Implement MAC
+
+//MAC, DH, LCV fails
+//MAC causes failure when there isnt one
+//DH, LCV take WAY too long (may be getting stuck or repeating things
+//ACP works, MRV works
+
+//Clean up code
+//Changes
+//Added AC3 for ACP and MAC
+//Added MRV, DH, and LCV

@@ -25,7 +25,7 @@ private:
 
     char backTrackSearch(SudokuPuzzle& puzzle, int &level, long timeout, int &nodes, int &deadends, long start);
     Variable selectNextVariable (SudokuPuzzle puzzle);
-    Domain orderDomainValues (SudokuPuzzle puzzle, Variable variable);
+    Domain orderDomainValues (SudokuPuzzle puzzle, Position position);
     bool checkConsistency (SudokuPuzzle puzzle, Position position, char value);
     bool checkCompleteness (SudokuPuzzle puzzle);
 
@@ -35,11 +35,12 @@ private:
     std::vector<Variable> applyMRV (SudokuPuzzle puzzle, std::vector<Variable> unassigned);
     std::vector<Variable> applyDH (SudokuPuzzle puzzle, std::vector<Variable> unassigned);
     Domain applyLCV (SudokuPuzzle puzzle, Variable variable);
-    void applyAC3 (SudokuPuzzle& puzzle);
+    bool applyAC3(SudokuPuzzle& puzzle, int level);
 
-    int getDegree (SudokuPuzzle puzzle, Variable variable);
-    int getRemainingValues  (SudokuPuzzle puzzle, Variable variable);
-    int getConstraints (SudokuPuzzle puzzle, Variable variable, char value);
+    int getDegree (SudokuPuzzle puzzle, Position position, std::vector<Variable> unassigned);
+    int getRemainingValues  (SudokuPuzzle puzzle, Position position);
+    int getConstraints (SudokuPuzzle puzzle, Position position, char value);
+    std::vector<std::pair<Variable,Variable>> loadConstraints (SudokuPuzzle puzzle);
 
     bool checkAllDif (SudokuPuzzle puzzle, Position position, char value);
     bool checkRow (SudokuPuzzle puzzle, Position position, char value);
@@ -49,10 +50,10 @@ private:
     std::vector<Variable> getUnassignedVariables (SudokuPuzzle puzzle);
     int findSmallest (std::vector<int> list);
     int findLargest (std::vector<int> list);
-    bool checkArc (SudokuPuzzle puzzle, Variable variable1, Variable variable2);
+    bool checkArc (SudokuPuzzle puzzle, Position check, Position against, char &fail);
     void assignValue (Variable &v, char value, int level);
-    std::vector<Variable> getNeighbors (SudokuPuzzle puzzle, Variable variable);
-    bool withinBlock (SudokuPuzzle puzzle, Variable variable1, Variable variable2);
+    std::vector<Variable> getNeighbors (SudokuPuzzle puzzle, Position variable);
+    bool withinBlock (SudokuPuzzle puzzle, Position variable1, Position variable2);
 
 public:
     SudokuSolver ();

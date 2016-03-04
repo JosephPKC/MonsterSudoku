@@ -22,17 +22,41 @@ bool SudokuSolver::getFlag (HeuristicFlag::HeuristicFlag flag) {
 
 LogBundle SudokuSolver::solve (SudokuPuzzle puzzle, long timeout, char& error) {
 //    cout << "Inside solve" << endl;
-    int depth = -1;
+    int depth = 0;
     const clock_t start = clock ();
-    int status;
+    int status = 0;
     int nodes = 0, backtracks = 0;
     long ppStart = clock () / CLOCKS_PER_SEC;
     long searchStart = clock () / CLOCKS_PER_SEC;
     long searchFinish;
     LogBundle L;
+    std::vector<std::pair<Position,char>> solution;
 
     if (_flags[HeuristicFlag::kACP]) {
         //Perform ACP
+//        cout << "Applying ACP" << endl;
+        bool result = applyAC3(puzzle,depth);
+//        for (std::size_t x = 0; x < puzzle.n(); ++x) {for (std::size_t y = 0; y < puzzle.n(); ++y) {cout << "Domain of " << x << "," << y << ": "; for (std::size_t i = 0; i < puzzle.sudoku()[x][y]._domain._domain.size(); ++i) {cout << puzzle.sudoku()[x][y]._domain._domain[i] << ";";} cout << endl;} }puzzle.display(); cin.get();
+        if (!result) {
+            L._totalStart = start / CLOCKS_PER_SEC;
+            L._preStart = ppStart;
+            L._preDone = clock () / CLOCKS_PER_SEC;
+            L._searchStart = searchStart;
+            L._searchDone = clock () / CLOCKS_PER_SEC;
+            for (std::size_t x = 0; x < (std::size_t)puzzle.n(); ++x) {
+                for (std::size_t y = 0; y < (std::size_t)puzzle.n(); ++y) {
+                    Position p(x,y);
+                    std::pair<Position,char> P(p,'0');
+                    solution.insert (solution.begin (),P);
+                }
+            }
+            L._status = 1;
+            L._nodes = nodes;
+            L._deadends = backtracks;
+            L._solution = solution;
+            L._solutionTime = (L._preDone - ppStart) + (L._searchDone - searchStart);
+            return L;
+        }
     }
     long ppFinish = clock () / CLOCKS_PER_SEC;
     L._totalStart = start / CLOCKS_PER_SEC;
@@ -44,13 +68,13 @@ LogBundle SudokuSolver::solve (SudokuPuzzle puzzle, long timeout, char& error) {
 //    cout << "Search is done" << endl;
     searchFinish = clock () / CLOCKS_PER_SEC;
     L._searchDone = searchFinish;
-    std::vector<std::pair<Position,char>> solution;
+
     if (error == Error::kNoError || error == Error::kFailure) {
         status = 1;
         if (puzzle.complete()) {
             //complete solution
-            for (std::size_t x = 0; x < puzzle.n(); ++x) {
-                for (std::size_t y = 0; y < puzzle.n(); ++y) {
+            for (std::size_t x = 0; x < (std::size_t)puzzle.n(); ++x) {
+                for (std::size_t y = 0; y < (std::size_t)puzzle.n(); ++y) {
                     Position p(x,y);
                     std::pair<Position,char> P(p,puzzle.sudoku()[x][y]._value);
                     solution.insert (solution.end(),P);
@@ -59,8 +83,8 @@ LogBundle SudokuSolver::solve (SudokuPuzzle puzzle, long timeout, char& error) {
         }
         else {
             //Unsolvable
-            for (std::size_t x = 0; x < puzzle.n(); ++x) {
-                for (std::size_t y = 0; y < puzzle.n(); ++y) {
+            for (std::size_t x = 0; x < (std::size_t)puzzle.n(); ++x) {
+                for (std::size_t y = 0; y < (std::size_t)puzzle.n(); ++y) {
                     Position p(x,y);
                     std::pair<Position,char> P(p,'0');
                     solution.insert (solution.begin (),P);
@@ -70,8 +94,8 @@ LogBundle SudokuSolver::solve (SudokuPuzzle puzzle, long timeout, char& error) {
     }
     else if (error == Error::kTimeoutError){
         status = -1;
-        for (std::size_t x = 0; x < puzzle.n(); ++x) {
-            for (std::size_t y = 0; y < puzzle.n(); ++y) {
+        for (std::size_t x = 0; x < (std::size_t)puzzle.n(); ++x) {
+            for (std::size_t y = 0; y < (std::size_t)puzzle.n(); ++y) {
                 Position p(x,y);
                 std::pair<Position,char> P(p,'0');
                 solution.insert (solution.begin (),P);
@@ -107,19 +131,22 @@ char SudokuSolver::backTrackSearch (SudokuPuzzle &puzzle, int& level, long timeo
     Variable v = selectNextVariable(puzzle);
 //    cout << v._position._x << "," << v._position._y << endl;
     if (v._position._x == -1) {
-        std::cout << "No more unassigned variables left; Complete should've have ended it, but didn't" << std::endl;
+//        std::cout << "No more unassigned variables left; Complete should've have ended it, but didn't" << std::endl;
     }
 //    cout << "Ordering Domain Values... ";
-    Domain ordered = orderDomainValues(puzzle,v);
+    Domain ordered = orderDomainValues(puzzle,v._position);
 //    for (int i = 0; i < ordered._domain.size(); ++i) {cout << ordered._domain[i] << ",";} cout << std::endl;
+//    cout << "Values size=" << ordered._domain.size() << endl;
     for (std::size_t i = 0; i < ordered._domain.size (); ++i) {
 //        cout << "Checking the value=" << ordered._domain[i] << " @ " << i << "... ";
+//        cout << "i=" << i << "..." << endl;
+        bool r = true;
         if (checkConsistency(puzzle,v._position,ordered._domain[i])) {
 //            cout << "CONSISTENT" << endl;
 //            cout << "Assigning value" << endl;
-//            cout << "value before=" << v._value << endl;
+//            cout << "value before=" << puzzle.sudoku()[v._position._x][v._position._y]._value << endl;
             assignValue(puzzle.sudoku()[v._position._x][v._position._y],ordered._domain[i],level);
-//            cout << "value after=" << v._value << endl;
+//            cout << "value after=" << puzzle.sudoku()[v._position._x][v._position._y]._value << endl;
             ++nodes;
 //            cout << "Nodes=" << nodes << endl;
             if (_flags[HeuristicFlag::kFC]) {
@@ -128,25 +155,47 @@ char SudokuSolver::backTrackSearch (SudokuPuzzle &puzzle, int& level, long timeo
             }
 
             if (_flags[HeuristicFlag::kMAC]) {
+                r = applyAC3 (puzzle,level);
+                for (std::size_t x = 0; x < puzzle.n(); ++x) {
+                    for (std::size_t y = 0; y < puzzle.n(); ++y) {
+//                        cout << "Domain of " << x << "," << y << ": ";
+                        for (std::size_t i = 0; i < puzzle.sudoku()[x][y]._domain._domain.size(); ++i) {
+//                            cout << puzzle.sudoku()[x][y]._domain._domain[i] << ";";
+                        }
+//                        cout << endl;
+                    }
+                }
+//                puzzle.display();
+//                cin.get();
+                if(!r) {
+//                    cout << "Failure via AC3" << endl;
+//                    return Error::kFailure;
+                    undoLastAction(puzzle);
+                }
                 //MAC
+
             }
-//            cout << "Recursion" << endl;
-            char result = backTrackSearch (puzzle,level,timeout,nodes,deadends,start);
-//            cout << "result is... ";
-            if (result == Error::kNoError) {
-//                cout << "NO ERROR" << endl;
-                return result;
+//            cout << "Recursion @ level=" << level << endl;
+//            puzzle.display();
+            if (r) {
+                char result = backTrackSearch (puzzle,level,timeout,nodes,deadends,start);
+    //            cout << "result is... ";
+                if (result == Error::kNoError) {
+    //                cout << "NO ERROR" << endl;
+                    return result;
+                }
+                else if (result == Error::kFailure) {
+//                    cout << "FAILURE @level=" << level << endl;
+                    undoLastAction(puzzle);
+                    ++deadends;
+                }
+                else if (result == Error::kTimeoutError) {
+    //                cout << "TIMEOUT" << endl;
+    //                std::cout << "Timeout" << std::endl;
+                    return result;
+                }
             }
-            else if (result == Error::kFailure) {
-//                cout << "FAILURE" << endl;
-                undoLastAction(puzzle);
-                ++deadends;
-            }
-            else if (result == Error::kTimeoutError) {
-//                cout << "TIMEOUT" << endl;
-//                std::cout << "Timeout" << std::endl;
-                return result;
-            }
+
         }
         else {
 //            cout << "Not Consistent" << endl;
@@ -160,13 +209,33 @@ Variable SudokuSolver::selectNextVariable (SudokuPuzzle puzzle) {
 //    cout << "Getting unassigned variables... ";
     std::vector<Variable> unassigned = getUnassignedVariables(puzzle);
 //    cout << unassigned.size() << " of them" << endl;
+//    cout << "Begin with total unassigned in order:" << endl;
+//    for (int i=0;i<unassigned.size();++i){cout<<unassigned[i]._position._x<<","<<unassigned[i]._position._y<<";";}cout<<endl;
     if (_flags[HeuristicFlag::kMRV]) {
         //MRV
+        std::vector<Variable> mrv = applyMRV (puzzle,unassigned);
+//        cout << "MRVing unassigned:" << endl;
+//        for (int i=0;i<mrv.size();++i){cout<<getRemainingValues(puzzle,mrv[i]._position)<<":"<<mrv[i]._position._x<<","<<mrv[i]._position._y<<";";}cout<<endl;
+        if (_flags[HeuristicFlag::kDH]) {
+            //DH
+            std::vector<Variable> dh = applyDH (puzzle,mrv);
+//            cout << "DHing mrv:" << endl;
+//                    for (int i=0;i<dh.size();++i){cout<<getDegree(puzzle,dh[i]._position,mrv)<<":"<<dh[i]._position._x<<","<<dh[i]._position._y<<";";}cout<<endl;
+//                    cout << "Domain of chosen: ";
+//                    for (int i=0;i<dh[0]._domain._domain.size();++i){cout<<dh[0]._domain._domain[i]<<";";}cout<<endl;
+            return dh[0];
+        }
+        else {
+            return mrv[0];
+        }
     }
-    if (_flags[HeuristicFlag::kDH]) {
-        //DH
+    else if (_flags[HeuristicFlag::kDH]) {
+        std::vector<Variable> dh = applyDH (puzzle,unassigned);
+//        cout << "DHing unassigned:" << endl;
+//                for (int i=0;i<dh.size();++i){cout<<getDegree(puzzle,dh[i]._position,unassigned)<<":"<<dh[i]._position._x<<","<<dh[i]._position._y<<";";}cout<<endl;
+        return dh[0];
     }
-    if (unassigned.size () > 0) {
+    else if (unassigned.size () > 0) {
         return unassigned[0];
     }
     else {
@@ -176,12 +245,14 @@ Variable SudokuSolver::selectNextVariable (SudokuPuzzle puzzle) {
     }
 }
 
-Domain SudokuSolver::orderDomainValues (SudokuPuzzle puzzle, Variable variable) {
+Domain SudokuSolver::orderDomainValues (SudokuPuzzle puzzle, Position position) {
     if (_flags[HeuristicFlag::kLCV]) {
         //LCV
+        Domain lcv = applyLCV (puzzle, puzzle.sudoku()[position._x][position._y]);
+        return lcv;
     }
     else {
-        return variable._domain;
+        return puzzle.sudoku()[position._x][position._y]._domain;
     }
 }
 
@@ -228,17 +299,19 @@ void SudokuSolver::undoLastAction (SudokuPuzzle &puzzle) {
     std::vector<Variable> changes = _bookKeep.undo();
 //    cout << changes.size() << " many changes" << endl;
 //    for (int i = 0; i < changes.size(); ++i) {cout << changes[i]._position._x << "," << changes[i]._position._y << ": "; for (int j = 0; j < changes[i]._domain._domain.size(); ++j) {cout << changes[i]._domain._domain[j] << ",";}cout << endl;}
+
     //Add values to domain
 
     for (std::size_t i = 0; i < changes.size(); ++i) {
 //        cout << "Modifying current variables with stored ones @ i=" << i << endl;
         puzzle.sudoku()[changes[i]._position._x][changes[i]._position._y] = changes[i];
     }
+//    puzzle.display();
 }
 
 void SudokuSolver::forwardCheck (SudokuPuzzle &puzzle, Variable variable, int level) {
 //    cout << "Grabbing Neighbors of var=" << variable._position._x << "," << variable._position._y << " : " << variable << "... ";
-    std::vector<Variable> neighbors = getNeighbors(puzzle,variable);
+    std::vector<Variable> neighbors = getNeighbors(puzzle,variable._position);
 //    for (int i = 0; i < neighbors.size(); ++i) {cout << neighbors[i]._position._x << "," << neighbors[i]._position._y << ";";} cout << endl;
     for (std::size_t i = 0; i < neighbors.size(); ++i) {
         for (std::size_t j = 0; j < neighbors[i]._domain._domain.size(); ++j) {
@@ -263,30 +336,188 @@ void SudokuSolver::forwardCheck (SudokuPuzzle &puzzle, Variable variable, int le
 }
 
 std::vector<Variable> SudokuSolver::applyMRV(SudokuPuzzle puzzle, std::vector<Variable> unassigned) {
+    //Find smallest value in the vector
+//    cout << "In MRV" << endl;
+    int min = getRemainingValues (puzzle,unassigned[0]._position);
+//    cout << "MRV of " << unassigned[0]._position._x << "," << unassigned[0]._position._y << ": " << min << "; ";
+    for (std::size_t i = 1; i < unassigned.size (); ++i) {
 
+        int cur = getRemainingValues (puzzle,unassigned[i]._position);
+//        cout << "MRV of " << unassigned[i]._position._x << "," << unassigned[i]._position._y << ": " << cur << "; ";
+        if (cur < min) {
+            min = cur;
+        }
+    }
+//    cout << endl;
+    std::vector<Variable> mrvVector;
+    for (std::size_t i = 0; i < unassigned.size (); ++i) {
+        if (getRemainingValues (puzzle,unassigned[i]._position) == min) {
+            mrvVector.insert (mrvVector.end (), unassigned[i]);
+        }
+    }
+    return mrvVector;
 }
 
 std::vector<Variable> SudokuSolver::applyDH(SudokuPuzzle puzzle, std::vector<Variable> unassigned) {
-
+    //THIS IS CORRECT
+//    cout << "In DH" << endl;
+    int max = getDegree (puzzle,unassigned[0]._position,unassigned);
+//    cout << "DH of " << unassigned[0]._position._x << "," << unassigned[0]._position._y << ": " << max << "; ";
+    for (std::size_t i = 1; i < unassigned.size (); ++i) {
+        int cur = getDegree (puzzle,unassigned[i]._position,unassigned);
+//        cout << "DH of " << unassigned[i]._position._x << "," << unassigned[i]._position._y << ": " << cur << "; ";
+        if (cur > max) {
+            max = cur;
+        }
+    }
+//    cout << endl;
+    std::vector<Variable> dhVector;
+    for (std::size_t i = 0; i < unassigned.size (); ++i) {
+        if (getDegree (puzzle,unassigned[i]._position,unassigned) == max) {
+            dhVector.insert (dhVector.end (), unassigned[i]);
+        }
+    }
+    return dhVector;
 }
 
 Domain SudokuSolver::applyLCV(SudokuPuzzle puzzle, Variable variable) {
-
+    std::vector<std::pair<char,int>> lcvVector;
+//    cout << "DOmainSize=" << variable._domain._domain.size() << endl;
+    for (std::size_t i = 0; i < variable._domain._domain.size(); ++i) {
+        std::pair<char,int> p(variable._domain._domain[i],getConstraints (puzzle,variable._position,variable._domain._domain[i]));
+        lcvVector.insert (lcvVector.end(),p);
+    }
+    //Sort from smallest to largest
+    for (std::size_t i = 0; i < lcvVector.size(); ++i) {
+        int j = i;
+        while (j > 0 && lcvVector[j].second < lcvVector[j - 1].second) {
+            std::pair<char,int> temp = lcvVector[j];
+            lcvVector[j] = lcvVector[j - 1];
+            lcvVector[j - 1] = temp;
+            j--;
+        }
+    }
+    //Create domain
+    Domain d;
+    for (std::size_t i = 0; i < lcvVector.size(); ++i) {
+        d.add(lcvVector[i].first);
+    }
+    return d;
 }
 
-void SudokuSolver::applyAC3 (SudokuPuzzle &puzzle) {
-
+bool SudokuSolver::applyAC3 (SudokuPuzzle &puzzle, int level) {
+    std::vector<std::pair<Position,Position>> arcs;
+//    cout << "Grabbing all arcs" << endl;
+    for (std::size_t x = 0; x < puzzle.n(); ++x) {
+        for (std::size_t y = 0; y < puzzle.n(); ++y) {
+            std::vector<Variable> neighbors = getNeighbors (puzzle,puzzle.sudoku()[x][y]._position);
+            for (std::size_t j = 0; j < neighbors.size(); ++j) {
+                Position c(x,y);
+                std::pair<Position,Position> p(c,neighbors[j]._position);
+                arcs.insert (arcs.end(),p);
+//                cout << "Arc: " << c._x << "," << c._y << " to " << neighbors[j]._position._x << "," << neighbors[j]._position._y << ";" << endl;
+            }
+        }
+    }
+//    cout << "Arc Size=" << arcs.size() << endl;
+    for (std::size_t i = 0; i < arcs.size(); ++i) {
+        char fail;
+//        cout << "i=" << i <<"Checking Arc Consistency between " << arcs[i].first._x << "," << arcs[i].first._y << " and " << arcs[i].second._x << "," << arcs[i].second._y << "...";
+        Position cur1 = arcs[i].first;
+        Position cur2 = arcs[i].second;
+//        cout << "Erasing this..." << arcs.begin()->first._x << "," << arcs.begin()->first._y << " to " << arcs.begin()->second._x << "," << arcs.begin()->second._y << endl;
+        arcs.erase (arcs.begin ());
+        --i;
+//        cout << "ArcSize=" << arcs.size() << endl;
+        if (!checkArc (puzzle,cur1,cur2,fail)) {
+//            cout <<"Checking Arc Consistency between " << cur1._x << "," << cur1._y << " and " << cur2._x << "," << cur2._y << "...";
+//            cout << "Not Consistent" << endl;
+//            cout << "Failing value=" << fail << endl;
+//            cout << "Domain of " << cur1._x << "," << cur1._y << ": ";
+//            for (int z = 0; z < puzzle.sudoku()[cur1._x][cur1._y]._domain._domain.size(); ++z) {cout << puzzle.sudoku()[cur1._x][cur1._y]._domain._domain[z] << ";"; }cout << endl;
+//            cout << "Domain of " << cur2._x << "," << cur2._y << ": ";
+//            for (int z = 0; z < puzzle.sudoku()[cur2._x][cur2._y]._domain._domain.size(); ++z) {cout << puzzle.sudoku()[cur2._x][cur2._y]._domain._domain[z] << ";";}cout << endl;
+            Domain d;
+            d.add(fail);
+            int x = cur1._x, y = cur1._y;
+            bookKeep(level,puzzle.sudoku()[x][y],d);
+//            cout << "Domain is...";
+            if (puzzle.sudoku()[x][y]._domain._domain.empty()) {
+//                cout << "Empty" << endl;
+                return false;
+            }
+            else {
+//                cout << "Not Empty" << endl;
+            }
+//            cout << "Adding propagated neighbors of " << cur1._x << "," << arcs[i].first._y << ": ";
+            std::vector<Variable> neighbors = getNeighbors (puzzle,cur1);
+//            cout << "NeighborsSize=" << neighbors.size() << endl;
+            for (std::size_t j = 0; j < neighbors.size(); ++j) {
+                bool in = false;
+                std::pair<Position,Position> p(neighbors[j]._position,cur1);
+                for (std::size_t k = 0; k < arcs.size(); ++k) {
+                    if (p.first._x == arcs[k].first._x && p.first._y == arcs[k].first._y && p.second._x == arcs[k].second._x && p.second._y == arcs[k].second._y) {
+                        in = true;
+                    }
+                }
+                if (!in) {
+//                    std::pair<Position,Position> p(cur1,neighbors[j]._position);
+                    arcs.insert (arcs.end (),p);
+//                    cout << "Arc " << p.first._x << "," << p.first._y << " to " << p.second. _x << "," << p.second._y << ";";
+                }
+            }
+//            cout << endl;
+        }
+        else {
+//            cout << "Consistent" << endl;
+        }
+    }
+    return true;
 }
 
-int SudokuSolver::getDegree (SudokuPuzzle puzzle, Variable variable) {
-
+int SudokuSolver::getDegree (SudokuPuzzle puzzle, Position position, std::vector<Variable> unassigned) {
+    //THIS IS CORRECT
+    int degree = 0;
+//    for (std::size_t i = 0; i < unassigned.size (); ++i) {
+//        Position pos = unassigned[i]._position;
+//        if ((pos._x != position._x && pos._y != position._y) && (pos._x == position._x || pos._y == position._y || withinBlock (puzzle,position,pos))) {
+//            ++degree;
+//        }
+//    }
+    std::vector<Variable> neighbors = getNeighbors (puzzle, position);
+    for (std::size_t i = 0; i < neighbors.size (); ++i) {
+        if (neighbors[i]._value == '0') {
+            ++degree;
+        }
+    }
+    return degree;
 }
 
-int SudokuSolver::getRemainingValues  (SudokuPuzzle puzzle, Variable variable) {
-
+int SudokuSolver::getRemainingValues  (SudokuPuzzle puzzle, Position position) {
+    //Count how many values in the domain
+    return puzzle.sudoku()[position._x][position._y]._domain._domain.size();
 }
 
-int SudokuSolver::getConstraints (SudokuPuzzle puzzle, Variable variable, char value) {
+int SudokuSolver::getConstraints (SudokuPuzzle puzzle, Position position, char value) {
+    //Count how many unassigned variables in the row that have the value
+    //Count how many unassigned variables in the column that have the value
+    //Count how many unassigned variables in the block that have the value
+    //The number of constraints is the number of values it knocks out of its neighbors, or # of neighbors * # of total values - constraints, which is number of values kept.
+    int constraints = 0;
+    std::vector<Variable> neighbors = getNeighbors (puzzle, position);
+    for (std::size_t i = 0; i < neighbors.size (); ++i) {
+        if (neighbors[i]._value == '0') {
+            for (std::size_t j = 0; j < neighbors[i]._domain._domain.size(); ++j) {
+                if (neighbors[i]._domain._domain[j] == value) {
+                    ++constraints;
+                }
+            }
+        }
+    }
+    return constraints;
+}
+
+std::vector<std::pair<Variable, Variable> > SudokuSolver::loadConstraints(SudokuPuzzle puzzle) {
 
 }
 
@@ -368,7 +599,7 @@ int SudokuSolver::findLargest (std::vector<int> list) {
     return max;
 }
 
-bool SudokuSolver::checkArc (SudokuPuzzle puzzle, Variable variable1, Variable variable2) {
+bool SudokuSolver::checkArc (SudokuPuzzle puzzle, Position check, Position against, char& fail) {
 //    int x1 = variable1._position._x, x2 = variable2._position._x;
 //    int y1 = variable1._position._y, y2 = variable2._position._y;
 //    int t1 = (x1 / puzzle.p()) * puzzle.p(), t2 = (x2 / puzzle.p()) * puzzle.p();
@@ -394,6 +625,21 @@ bool SudokuSolver::checkArc (SudokuPuzzle puzzle, Variable variable1, Variable v
 //    else {
 //        return true;
     //    }
+    bool consistent;
+    for (std::size_t i = 0; i < puzzle.sudoku()[check._x][check._y]._domain._domain.size(); ++i) {
+        consistent = false;
+        for (std::size_t j = 0; j < puzzle.sudoku()[against._x][against._y]._domain._domain.size(); ++j) {
+            if (puzzle.sudoku()[check._x][check._y]._domain._domain[i] != puzzle.sudoku()[against._x][against._y]._domain._domain[j]) {
+                consistent = true;
+                j = puzzle.sudoku()[against._x][against._y]._domain._domain.size();
+            }
+        }
+        if (!consistent) {
+            fail = puzzle.sudoku()[check._x][check._y]._domain._domain[i];
+            return false;
+        }
+    }
+    return true;
 }
 
 void SudokuSolver::assignValue(Variable& v, char value, int level) {
@@ -411,21 +657,24 @@ void SudokuSolver::assignValue(Variable& v, char value, int level) {
     v._value = value;
 }
 
-std::vector<Variable> SudokuSolver::getNeighbors(SudokuPuzzle puzzle, Variable variable) {
+std::vector<Variable> SudokuSolver::getNeighbors(SudokuPuzzle puzzle, Position variable) {
     std::vector<Variable> neighbors;
-    for (std::size_t x = 0; x < puzzle.n(); ++x) {
-        for (std::size_t y = 0; y < puzzle.n(); ++y) {
-            if ((x != variable._position._x || y != variable._position._y) && (x == variable._position._x || y == variable._position._y || withinBlock (puzzle, variable, puzzle.sudoku()[x][y]))) {
+//    cout << "Neighbors of " << variable._x << "," << variable._y << endl;
+    for (std::size_t x = 0; x < (std::size_t)puzzle.n(); ++x) {
+        for (std::size_t y = 0; y < (std::size_t)puzzle.n(); ++y) {
+
+            if ((x != variable._x || y != variable._y) && (x == variable._x || y == variable._y || withinBlock (puzzle, variable, puzzle.sudoku()[x][y]._position))) {
                 neighbors.insert (neighbors.end (), puzzle.sudoku()[x][y]);
+//                cout << x << "," << y << ": ...is a neighbor!" << endl;
             }
         }
     }
     return neighbors;
 }
 
-bool SudokuSolver::withinBlock(SudokuPuzzle puzzle, Variable variable1, Variable variable2) {
-    int x1 = variable1._position._x, x2 = variable2._position._x;
-    int y1 = variable1._position._y, y2 = variable2._position._y;
+bool SudokuSolver::withinBlock(SudokuPuzzle puzzle, Position variable1, Position variable2) {
+    int x1 = variable1._x, x2 = variable2._x;
+    int y1 = variable1._y, y2 = variable2._y;
     int t1 = (x1 / puzzle.p()) * puzzle.p(), t2 = (x2 / puzzle.p()) * puzzle.p();
     int b1 = t1 + puzzle.p() - 1, b2 = t2 + puzzle.p() - 1;
     int l1 = (y1 / puzzle.q()) * puzzle.q(), l2 = (y2 / puzzle.q()) * puzzle.q();
