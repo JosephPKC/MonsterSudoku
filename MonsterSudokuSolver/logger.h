@@ -46,6 +46,7 @@ private:
 public:
     Logger();
     Logger (LogBundle log);
+    LogBundle getBundle ();
     void logInfo (char* filename);
     void printInfo ();
 };

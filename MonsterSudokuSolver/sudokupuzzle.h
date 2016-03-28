@@ -31,27 +31,6 @@ struct Domain {
     void add (char value) {
         _domain.insert (_domain.end(), value);
     }
-//    bool remove (std::size_t index) {
-//        cout << "In Remove" << endl;
-//        cout << "CHecking if index=" << index << " >= domain=" << _domain.size() << "... ";
-//        if (index >= _domain.size ()) {
-//            cout << "TRUE" << endl;
-//            return false;
-//        }
-//        cout << "false" << endl;
-////        cout << "size=" << _domain.size() << endl;
-//        cout << "???" << endl;
-//        std::vector<char>::iterator it = _domain.begin();
-//        cout << "Iterating the iterator" << endl;
-//        for (std::size_t i = 0; i <= index && i < _domain.size(); ++i) {
-//            cout << "i=" << i << endl;
-//            it++;
-//        }
-//        cout << "Erasing... " << *it << endl;
-//        _domain.erase (it);
-//        cout << "Done Erasing" << endl;
-//        return true;
-//    }
 };
 
 struct Variable {

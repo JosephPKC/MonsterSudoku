@@ -14,15 +14,9 @@ namespace Error {
     const char kSelectNextVariableEmpty = '#';
     const char kEmptyDomain = '%';
 }
-//const static char kTokenAlphabet[35] = {'0','1','2','3','4','5','6','7','8','9','10'};
-
 
 const static int kTokenMax = 34;
 const static char kInitialToken = '0';
-
-
-
-
 
 class SudokuGenerator {
 private:
@@ -45,13 +39,7 @@ private:
     std::vector<char> loadValues(int n) const;
     void removeFromValue (std::vector<char> &vector, int pos) const;
 
-//    bool selectCell (int& x, int& y) const;
-//    int selectValue (int x, int y, char** sudoku) const;
     void destroySudoku (char **&sudoku) const;
-
-
-
-    //Move
 
 public:
     SudokuGenerator();

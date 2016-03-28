@@ -24,17 +24,13 @@ SudokuPuzzle::SudokuPuzzle()
 
 SudokuPuzzle::SudokuPuzzle(char **sudoku, int m, int n, int p, int q)
 {
-//    cout << "Inside Puzzle Constructor" << endl;
-//    cout << "n=" << n << endl;
     _m = m;
     _n = n;
     _p = p;
     _q = q;
-//    cout << "Creating the array" << endl;
     create (_sudoku, _n);
     for (std::size_t x = 0; x < _n; ++x) {
         for (std::size_t y = 0; y < _n; ++y) {
-//            cout << "x=" << x << ",y=" << y << endl;
             Position P (x,y);
             Domain D;
             if (sudoku[x][y] == '0') {
@@ -114,17 +110,14 @@ void SudokuPuzzle::set(int x, int y, Variable v)
 
 bool SudokuPuzzle::consistent(int x, int y)
 {
-    //???????????
+
 }
 
 bool SudokuPuzzle::complete()
 {
-//    cout << "In Complete" << endl;
     for (std::size_t x = 0; x < _n; ++x) {
         for (std::size_t y = 0; y < _n; ++y) {
-//            std::cout << "x=" << x << "," << "y=" << y << ":" << "v=" << _sudoku[x][y]._value << std::endl;
             if (_sudoku[x][y]._value == '0') {
-
                 return false;
             }
         }

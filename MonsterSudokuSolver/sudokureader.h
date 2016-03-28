@@ -3,8 +3,6 @@
 #include <fstream>
 #include "sudokugenerator.h"
 
-//Input file for generating a sudoku is simply M N P Q
-//Output file for saving a sudoku is N P Q \n Sudoku Puzzle Grid
 class SudokuReader {
 private:
     char* _inputFileName;

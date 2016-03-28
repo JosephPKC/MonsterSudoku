@@ -9,10 +9,14 @@ Logger::Logger (LogBundle log) {
     _log = log;
 }
 
+LogBundle Logger::getBundle()
+{
+    return _log;
+}
+
 void Logger::logInfo (char* filename) {
     std::ofstream output (filename);
     if (output.is_open ()) {
-//        output << "DEBUG" << std::endl;
         output << "TOTAL_START=" << _log._totalStart << std::endl;
         output << "PREPROCESSING_START=" << _log._preStart << std::endl;
         output << "PREPROCESSING_DONE=" << _log._preDone << std::endl;
@@ -50,12 +54,11 @@ void Logger::logInfo (char* filename) {
 }
 
 void Logger::printInfo() {
-//        std::cout << "DEBUG" << std::endl;
-    std::cout << "TOTAL_START=" << _log._totalStart << std::endl;
-    std::cout << "PREPROCESSING_START=" << _log._preStart << std::endl;
-    std::cout << "PREPROCESSING_DONE=" << _log._preDone << std::endl;
-    std::cout << "SEARCH_START=" << _log._searchStart << std::endl;
-    std::cout << "SEARCH_DONE=" << _log._searchDone << std::endl;
+//    std::cout << "TOTAL_START=" << _log._totalStart << std::endl;
+//    std::cout << "PREPROCESSING_START=" << _log._preStart << std::endl;
+//    std::cout << "PREPROCESSING_DONE=" << _log._preDone << std::endl;
+//    std::cout << "SEARCH_START=" << _log._searchStart << std::endl;
+//    std::cout << "SEARCH_DONE=" << _log._searchDone << std::endl;
     std::cout << "SOLUTION_TIME=" << _log._solutionTime << std::endl;
     std::cout << "STATUS=";
     switch (_log._status) {
@@ -73,14 +76,14 @@ void Logger::printInfo() {
         }
     }
     std::cout << std::endl;
-    std::cout << "SOLUTION=(";
+   /* std::cout << "SOLUTION=(";
     for (std::size_t i = 0; i < _log._solution.size(); ++i) {
         std::cout << _log._solution[i].second;
         if (i != _log._solution.size() - 1) {
             std::cout << ",";
         }
     }
-    std::cout << ")" << std::endl;
+    std::cout << ")" << std::endl;*/
     std::cout << "COUNT_NODES=" << _log._nodes << std::endl;
-    std::cout << "COUNT_DEADENDS=" << _log._deadends << std::endl;
+//    std::cout << "COUNT_DEADENDS=" << _log._deadends << std::endl;
 }

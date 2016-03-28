@@ -10,11 +10,6 @@ SudokuGenerator::SudokuGenerator() {
 
 SudokuGenerator::SudokuGenerator (int m, int n, int p, int q) {
     srand (time (0));
-//    assert (checkInputConstraints (m,n,p,q));
-//    setPresetCellNumber(m);
-//    setSudokuSize(n);
-//    setBlockRowSize(p);
-//    setBlockColumnSize(q);
     if (!checkInputConstraints (m,n,p,q)) {
         throw  Error::kInputError;
     }
@@ -22,7 +17,6 @@ SudokuGenerator::SudokuGenerator (int m, int n, int p, int q) {
     _n = n;
     _p = p;
     _q = q;
-//    assert (checkInputConstraints (_m,_n,_p,_q));
 
 }
 
@@ -208,11 +202,6 @@ void SudokuGenerator::removeFromValue (std::vector<char>& vector, int pos) const
     vector.erase (vector.begin () + pos);
 }
 
-//bool SudokuGenerator::selectCell (int& x, int& y) const {
-
-//}
-
-//int SudokuGenerator::selectValue (int x, int y, int** sudoku) const;
 void SudokuGenerator::destroySudoku (char **&sudoku) const {
     for (std::size_t i = 0; i < (std::size_t) _n; ++i) {
         delete[] sudoku[i];
