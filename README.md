@@ -8,7 +8,7 @@ This is a Monster Sudoku Solver written for CS 171 at UCI.
 
   -Minimum Remaining Values
   
-  -Least Common Values
+  -Least Constraining Values
   
   -Degrees Heuristic
   
