@@ -4,13 +4,14 @@
 #include <ctime>
 #include "puzzle.h"
 #include "recorder.h"
+#include "logger.h"
 /* Implement CP */
 /* Implement MRV, DH, and LCV */
 /* Implement FC */
 /* Implement ACP and MAC */
 struct Heuristics {
 	bool hasMRV;
-	bool hasDH;
+	bool hasMD;
 	bool hasLCV;
 	bool hasACP;
 	bool hasMAC;
@@ -20,7 +21,7 @@ struct Heuristics {
 
 	Heuristics() {
 		hasMRV = false;
-		hasDH = false;
+		hasMD = false;
 		hasLCV = false;
 		hasACP = false;
 		hasMAC = false;
@@ -30,7 +31,7 @@ struct Heuristics {
 	}
 
 	friend std::ostream& operator << (std::ostream& out, const Heuristics& h) {
-		out << h.hasMRV << h.hasDH << h.hasLCV << h.hasACP << h.hasMAC << h.hasFC << h.hasCPP << h.hasCP;
+		out << h.hasMRV << h.hasMD << h.hasLCV << h.hasACP << h.hasMAC << h.hasFC << h.hasCPP << h.hasCP;
 		return out;
 	}
 };
@@ -39,14 +40,17 @@ class Solver {
 public:
 	Solver();
 
+	Solver(Heuristics heuristics);
 	Solver(bool mrv, bool dh, bool lcv, bool acp, bool mac, bool fc, bool cpp, bool cp);
 
 	Heuristics& heuristics();
+	Log log();
 
 	Puzzle solve(Puzzle puzzle, double timeout);
 private:
 	Heuristics _heuristics;
 	Recorder _recorder;
+	Logger _logger;
 	std::chrono::time_point<std::chrono::system_clock> _start;
 
 	/* Recursive backtracking search algorithm */

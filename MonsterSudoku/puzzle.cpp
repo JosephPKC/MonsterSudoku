@@ -138,7 +138,7 @@ void Puzzle::reset(std::size_t x, std::size_t y) {
 
 std::vector<bool> Puzzle::neighborValues(std::size_t x, std::size_t y) const {
 	std::vector<bool> values;
-	for(int i = 0; i < size(); ++i) {
+	for(int i = 0; i < n(); ++i) {
 		values.push_back(false);
 	}
 
@@ -168,7 +168,7 @@ std::vector<bool> Puzzle::neighborValues(std::size_t x, std::size_t y) const {
 std::ostream& operator << (std::ostream& out, const Puzzle& p) {
 	for(std::size_t x = 0; x < p.size(); ++x) {
 		if(x % p.p() == 0) {
-			for(std::size_t i = 0; i < 2 * p.n() + 2 * p.p() + 1; ++i) {
+			for(std::size_t i = 0; i < (std::size_t)(2 * p.n() + 2 * p.p() + 1); ++i) {
 				out << "-";
 			}
 			out << std::endl;
@@ -188,7 +188,7 @@ std::ostream& operator << (std::ostream& out, const Puzzle& p) {
 		out << "|";
 		out << std::endl;
 	}
-	for(std::size_t i = 0; i < 2 * p.n() + 2 * p.p() + 1; ++i) {
+	for(std::size_t i = 0; i < (std::size_t)(2 * p.n() + 2 * p.p() + 1); ++i) {
 		out << "-";
 	}
 	out << std::endl;

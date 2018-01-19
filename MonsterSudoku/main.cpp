@@ -28,14 +28,28 @@
  * gen m n p q file_path (only usage)
  * solve file_path -v
  * solve -g m n p q
+ * solve -g m n p q -mrv -acp ...
  * help
  */
+
+/* Need a check heuristics method to parse optional args like verbosity */
+
+struct Optionals {
+	Heuristics heuristics;
+	bool verbose;
+
+	Optionals() {
+		verbose = false;
+	}
+};
 
 void primary();
 utils::Error doCommand(std::vector<std::string> inputs);
 void error(utils::Error e);
 utils::Error getParameters(std::vector<std::string> inputs, int& m, int& n, int& p, int& q, int skip = 1);
-utils::Error getVerbosity(std::vector<std::string> inputs, bool& verbose, int skip = 2);
+utils::Error getOptionals(Optionals& options, std::vector<std::string> inputs, int skip = 2);
+
+
 
 Generator gen;
 
@@ -43,7 +57,7 @@ Generator gen;
 #define PUZZLE_TEST 0
 #define GEN_TEST 0
 #define REC_TEST 0
-#define SOLVE_TEST 1
+#define SOLVE_TEST 0
 
 int main() {
 #if PUZZLE_TEST
@@ -121,6 +135,7 @@ int main() {
 	catch(utils::Error e) {
 		error(e);
 	}
+	std::cout << s.log() << std::endl;
 
 #endif
 
@@ -180,6 +195,7 @@ utils::Error doCommand(std::vector<std::string> inputs) {
 			return utils::Error::Not_Enough_Args;
 		}
 		Puzzle pz;
+		Optionals options;
 		/* First, check if we are given a file OR -g + 4 parameters */
 		++it;
 		if(it->compare(utils::GEN_ARG) == 0) {
@@ -190,9 +206,7 @@ utils::Error doCommand(std::vector<std::string> inputs) {
 			if(res != utils::Error::Success) {
 				return res;
 			}
-			/* Check if verbose */
-			bool verbose;
-			res = getVerbosity (inputs, verbose, 6);
+			res = getOptionals(options, inputs, 6);
 			if(res != utils::Error::Success) {
 				return res;
 			}
@@ -216,9 +230,7 @@ utils::Error doCommand(std::vector<std::string> inputs) {
 			catch(utils::Error e) {
 				return e;
 			}
-			/* Check if verbose */
-			bool verbose;
-			utils::Error res = getVerbosity (inputs, verbose);
+			utils::Error res = getOptionals(options, inputs);
 			if(res != utils::Error::Success) {
 				return res;
 			}
@@ -227,14 +239,20 @@ utils::Error doCommand(std::vector<std::string> inputs) {
 		std::cout << pz << std::endl;
 
 		/* Solve puzzle */
-		Solver s;
+		Solver s(options.heuristics);
 		try {
 			Puzzle ps = s.solve(pz, 300);
 
 			/* Display solution & reports */
 			std::cout << ps << std::endl;
+			if(options.verbose) {
+				std::cout << s.log() << std::endl;
+			}
 		}
 		catch(utils::Error e) {
+			if(options.verbose && (e == utils::Error::Timeout || e == utils::Error::No_More_Values)) {
+				std::cout << s.log() << std::endl;
+			}
 			return e;
 		}
 	}
@@ -326,20 +344,39 @@ utils::Error getParameters(std::vector<std::string> inputs, int& m, int& n, int&
 	return utils::Error::Success;
 }
 
-utils::Error getVerbosity(std::vector<std::string> inputs, bool& verbose, int skip) {
+utils::Error getOptionals(Optionals& options, std::vector<std::string> inputs, int skip) {
 	if(inputs.size() < (unsigned int)skip) {
 		return utils::Error::Not_Enough_Args;
 	}
-	utils::vs_it it = std::next(inputs.begin(), skip);
 
-	if(it == inputs.end()) {
-		verbose = false;
-	}
-	else if(*it != utils::VERB_ARG) {
-		verbose = false;
-	}
-	else {
-		verbose = true;
+	for(utils::vs_it it = std::next(inputs.begin(), skip); it != inputs.end(); ++it) {
+		if(it->compare(utils::VERB_ARG) == 0) {
+			options.verbose = true;
+		}
+		else if(it->compare(utils::CPP_ARG) == 0) {
+			options.heuristics.hasCPP = true;
+		}
+		else if(it->compare(utils::CP_ARG) == 0) {
+			options.heuristics.hasCP = true;
+		}
+		else if(it->compare(utils::MRV_ARG) == 0) {
+			options.heuristics.hasMRV = true;
+		}
+		else if(it->compare(utils::LCV_ARG) == 0) {
+			options.heuristics.hasLCV = true;
+		}
+		else if(it->compare(utils::MD_ARG) == 0) {
+			options.heuristics.hasMD = true;
+		}
+		else if(it->compare(utils::ACP_ARG) == 0) {
+			options.heuristics.hasACP = true;
+		}
+		else if(it->compare(utils::MAC_ARG) == 0) {
+			options.heuristics.hasMAC = true;
+		}
+		else if(it->compare(utils::FC_ARG) == 0) {
+			options.heuristics.hasFC = true;
+		}
 	}
 	return utils::Error::Success;
 }

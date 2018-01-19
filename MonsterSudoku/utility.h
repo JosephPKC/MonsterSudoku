@@ -5,7 +5,7 @@
 namespace utils {
 #define DEBUG 0
 #define VERBOSE DEBUG || 0
-#define TIME DEBUG || 1
+#define TIME DEBUG || 0
 	enum Error {
 		Success,
 		No_Input,
@@ -28,6 +28,15 @@ namespace utils {
 
 	const std::string GEN_ARG = "-g";			// Argument to gen puzzles
 	const std::string VERB_ARG = "-v";			// Argument to make verbose reports
+	const std::string CPP_ARG = "-cpp";
+	const std::string CP_ARG = "-cp";
+	const std::string MRV_ARG = "-mrv";
+	const std::string LCV_ARG = "-lcv";
+	const std::string MD_ARG = "-md";
+	const std::string ACP_ARG = "-acp";
+	const std::string MAC_ARG = "-mac";
+	const std::string FC_ARG = "-fc";
+	const std::string ALL_ARG = "-all";
 
 	const std::string GEN_CMD = "gen";			// Command to gen a puzzle to file
 	const std::string SOLVE_CMD = "solve";		// Command to solve puzzle

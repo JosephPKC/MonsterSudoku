@@ -33,19 +33,19 @@ Puzzle Generator::generate(std::string path) {
 				throw utils::Error::Bad_Parameters;
 			}
 			/* The next lines are the puzzle */
-			Puzzle P(m, n, p, q);
-			for(std::size_t x = 0; x < n; ++x) {
-				for(std::size_t y = 0; y < n; ++y) {
+			Puzzle puzzle(m, n, p, q);
+			for(std::size_t x = 0; x < puzzle.size(); ++x) {
+				for(std::size_t y = 0; y < puzzle.size(); ++y) {
 					char c;
 					in >> c;
 					if(c != '.') {
-						P.access(x, y).setChosen(utils::convertCharToIndex (c));
+						puzzle.access(x, y).setChosen(utils::convertCharToIndex (c));
 					}
 				}
 			}
 			in.close();
-			if(P.isLegal()) {
-				return P;
+			if(puzzle.isLegal()) {
+				return puzzle;
 			}
 			else {
 				/* Illegal Puzzle */
@@ -76,8 +76,8 @@ Puzzle Generator::generate(int m, int n, int p, int q) {
 	while(reset) {
 		/* Generate a list of empty cells */
 		std::vector<Position> emptyCells;
-		for(std::size_t x = 0; x < n; ++x) {
-			for(std::size_t y = 0; y < n; ++y) {
+		for(std::size_t x = 0; x < puzzle.size(); ++x) {
+			for(std::size_t y = 0; y < puzzle.size(); ++y) {
 				emptyCells.push_back(Position(x, y));
 			}
 		}

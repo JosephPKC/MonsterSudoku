@@ -4,9 +4,13 @@ Solver::Solver() {
 	// Nothing
 }
 
+Solver::Solver(Heuristics heuristics) {
+	_heuristics = heuristics;
+}
+
 Solver::Solver(bool mrv, bool dh, bool lcv, bool acp, bool mac, bool fc, bool cpp, bool cp) {
 	_heuristics.hasMRV = mrv;
-	_heuristics.hasDH = dh;
+	_heuristics.hasMD = dh;
 	_heuristics.hasLCV = lcv;
 	_heuristics.hasACP = acp;
 	_heuristics.hasMAC = mac;
@@ -19,20 +23,46 @@ Heuristics& Solver::heuristics() {
 	return _heuristics;
 }
 
+Log Solver::log() {
+	return _logger.log();
+}
+
 Puzzle Solver::solve(Puzzle puzzle, double timeout) {
 	_start = std::chrono::system_clock::now();
 	preSearch(puzzle);
 	auto preSearchEnd = std::chrono::system_clock::now();
 	auto res = search(puzzle, timeout);
 	if(res != utils::Error::Success) {
+		if(res == utils::Error::Timeout) {
+			_logger.log().timeout = true;
+		}
+		else if(res == utils::Error::No_More_Values) {
+			_logger.log().solved = true;
+		}
+
+		auto end = std::chrono::system_clock::now();
+		std::chrono::duration<double> duration = end - _start;
+		std::chrono::duration<double> preDuration = preSearchEnd - _start;
+
+		_logger.log().totalTime = duration.count();
+		_logger.log().preTime = preDuration.count();
+
 		throw res;
 	}
-#if TIME
+	_logger.log().solvable = true;
+	_logger.log().solved = true;
+
 	auto end = std::chrono::system_clock::now();
 	std::chrono::duration<double> duration = end - _start;
+	std::chrono::duration<double> preDuration = preSearchEnd - _start;
+
+	_logger.log().totalTime = duration.count();
+	_logger.log().preTime = preDuration.count();
+
+#if TIME
 	std::cout << "Total Solve Time: " << duration.count() << "s." << std::endl;
-	duration = preSearchEnd - _start;
-	std::cout << "Pre Search Time: " << duration.count() << "s." << std::endl;
+
+	std::cout << "Pre Search Time: " << preDuration.count() << "s." << std::endl;
 #endif
 	return puzzle;
 }
@@ -72,6 +102,7 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 //		std::cout << "Value Chosen: " << *values.begin() << std::endl;
 		/* Do pre assignment processing */
 		if(preAssign(puzzle, chosen, *values.begin())) {
+			_logger.log().nodes += 1;
 			/* Assign the value to the cell */
 			assignValue(puzzle, chosen, *values.begin());
 //			std::cout << puzzle << std::endl;
@@ -84,6 +115,7 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 			}
 			else if(res != utils::Error::Timeout) {
 //				std::cout << "Backtracking: " << chosen << " & " << *values.begin() << std::endl;
+				_logger.log().deadEnds += 1;
 				backtrack(puzzle);
 //				std::cout << "Backtracked puzzle:\n" << puzzle << std::endl;
 //				puzzle.access(chosen.x, chosen.y).set(*values.begin(), false);
@@ -130,6 +162,8 @@ std::vector<std::size_t> Solver::orderValues(Puzzle puzzle, Position cell) {
 }
 
 void Solver::backtrack(Puzzle& puzzle) {
+	auto start = std::chrono::system_clock::now();
+
 	Record r = _recorder.undo();
 //	std::cout << "Undo this record: " << r << std::endl;
 	/* Unassign the cell that was assigned, and restore its domain */
@@ -143,6 +177,10 @@ void Solver::backtrack(Puzzle& puzzle) {
 			}
 		}
 	}
+
+	auto end = std::chrono::system_clock::now();
+	std::chrono::duration<double> duration = end - start;
+	_logger.log().btTime += duration.count();
 }
 
 void Solver::preSearch(Puzzle& puzzle) {
@@ -153,6 +191,8 @@ void Solver::preSearch(Puzzle& puzzle) {
 	if(!_heuristics.hasCPP) {
 		return;
 	}
+	auto start = std::chrono::system_clock::now();
+
 	for(std::size_t x = 0; x < puzzle.size(); ++x) {
 		for(std::size_t y = 0; y < puzzle.size(); ++y) {
 			if(!puzzle.isEmpty(x, y)) {
@@ -160,6 +200,10 @@ void Solver::preSearch(Puzzle& puzzle) {
 			}
 		}
 	}
+
+	auto end = std::chrono::system_clock::now();
+	std::chrono::duration<double> duration = end - start;
+	_logger.log().cppTime += duration.count();
 }
 
 bool Solver::preAssign(Puzzle& puzzle, Position toAssignCell, std::size_t val) {
