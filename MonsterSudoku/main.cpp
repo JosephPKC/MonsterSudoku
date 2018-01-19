@@ -180,10 +180,16 @@ utils::Error doCommand(std::vector<std::string> inputs) {
 			return res;
 		}
 		/* Get the file path */
-		std::string file_path = *++it;
+		std::string file_path = *std::next(it, 5);
 
 		/* Generate puzzle and save to file */
 		Puzzle puzzle = gen.generate(m, n, p, q);
+		try {
+			gen.saveToFile(puzzle, file_path);
+		}
+		catch(utils::Error e) {
+			return e;
+		}
 
 		/* Display puzzle */
 		std::cout << puzzle << std::endl;
