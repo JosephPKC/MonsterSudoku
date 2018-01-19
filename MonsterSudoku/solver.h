@@ -4,11 +4,10 @@
 #include <ctime>
 #include "puzzle.h"
 #include "recorder.h"
-/* Create naive backtracking search first */
-/* Implement random naive select next variable and select value functions */
-/* Implement naive pre process function */
-/* Implement naive backtrack function */
-/* Implement naive post assign function */
+/* Implement CP */
+/* Implement MRV, DH, and LCV */
+/* Implement FC */
+/* Implement ACP and MAC */
 struct Heuristics {
 	bool hasMRV;
 	bool hasDH;
