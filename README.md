@@ -4,7 +4,8 @@ This is a re-write of the final project of CS 171: Intro to Artificial Intellige
 This will generate puzzles randomly, or from text files, and solve puzzles. This will also log and keep track of statistics- time taken by individual algorithms, nodes searched, dead ends, etc.
 
 This also has a number of heuristic algorithms that can be enabled or disabled. This is purely to experiment- see what combination of heuristics performs the best over different sized puzzles. The heuristics are as follows:
-  -Minimum remaining values
+
+  - Minimum remaining values
   
   -Least constraining value
   
