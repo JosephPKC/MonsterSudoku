@@ -24,9 +24,9 @@ Puzzle Solver::solve(Puzzle puzzle, double timeout) {
 	if(res != utils::Error::Success) {
 		throw res;
 	}
-#if DEBUG
+#if TIME
 	auto end = std::chrono::system_clock::now();
-	std::chrono::duration<double> duration = end - start;
+	std::chrono::duration<double> duration = end - _start;
 	std::cout << duration.count() << "s finished." << std::endl;
 #endif
 	return puzzle;
@@ -34,6 +34,8 @@ Puzzle Solver::solve(Puzzle puzzle, double timeout) {
 
 /* Recursive backtracking search algorithm */
 utils::Error Solver::search(Puzzle& puzzle, double timeout) {
+	char c;
+//	std::cin >> c;
 	/* Check if done (base case) */
 	if(puzzle.isSolved()) {
 		return utils::Error::Success;
@@ -59,6 +61,7 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 	if(values.empty()) {
 		return utils::Error::No_More_Values;
 	}
+
 	/* While there are still values, try to assign that value to the cell */
 	while(!values.empty()) {
 //		std::cout << "Value Chosen: " << *values.begin() << std::endl;
@@ -66,7 +69,7 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 		if(preAssign(puzzle, chosen, *values.begin())) {
 			/* Assign the value to the cell */
 			assignValue(puzzle, chosen, *values.begin());
-			std::cout << puzzle << std::endl;
+//			std::cout << puzzle << std::endl;
 			/* Do post assignment processing */
 			postAssign(puzzle, chosen);
 			/* Recur, or try a new value now */
@@ -77,18 +80,25 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 			else if(res != utils::Error::Timeout) {
 //				std::cout << "Backtracking: " << chosen << " & " << *values.begin() << std::endl;
 				backtrack(puzzle);
+//				std::cout << "Backtracked puzzle:\n" << puzzle << std::endl;
+//				puzzle.access(chosen.x, chosen.y).set(*values.begin(), false);
 				values.erase(values.begin());
+
 			}
 			else {
+//				std::cout << "Timeout" << std::endl;
 				return res;
 			}
 		}
 		else {
 			/* Remove value from domain */
+//			std::cout << "Value: " << *values.begin() << " not legal" << std::endl;
+//			puzzle.access(chosen.x, chosen.y).set(*values.begin(), false);
 			values.erase(values.begin());
 		}
 	}
 	/* If we run out of values, and no success, return fail */
+//	std::cout << "No more values" << std::endl;
 	return utils::Error::No_More_Values;
 }
 
@@ -116,6 +126,7 @@ std::vector<std::size_t> Solver::orderValues(Puzzle puzzle, Position cell) {
 
 void Solver::backtrack(Puzzle& puzzle) {
 	Record r = _recorder.undo();
+//	std::cout << "Undo this record: " << r << std::endl;
 	/* Unassign the cell that was assigned, and restore its domain */
 	puzzle.restore(r.position.x, r.position.y, r.previousDomain);
 	/* Restore the domains for each propagation */
@@ -168,10 +179,11 @@ bool Solver::isLegal(Puzzle puzzle, Position cell, std::size_t value) {
 			return false;
 		}
 	}
+
 	Perimeter p = puzzle.perimeter(cell.x, cell.y);
 	for(std::size_t i = p.t; i <= p.b; ++i) {
 		for(std::size_t j = p.l; j <= p.r; ++j) {
-			if(i != y && j != x && !puzzle.isEmpty(i, j) && puzzle.access(i, j).getVal() == value) {
+			if(i != x && j != y && !puzzle.isEmpty(i, j) && puzzle.access(i, j).getVal() == value) {
 				return false;
 			}
 		}

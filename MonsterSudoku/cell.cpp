@@ -37,6 +37,10 @@ void Cell::setChosen(std::size_t value) {
 	set(value, true);
 }
 
+void Cell::setEmpty() {
+	_chosen = _size;
+}
+
 void Cell::reset() {
 	_chosen = _size;
 	for(utils::vb_it it = _domain.domain.begin(); it != _domain.domain.end(); ++it) {
@@ -65,7 +69,7 @@ std::ostream& operator << (std::ostream& out, const Cell& c) {
 		}
 	}
 	/* Print the domain as well */
-#if DEBUG
+#if VERBOSE
 	out << ": { ";
 	utils::vb_cit end = c._domain.domain.end();
 	--end;

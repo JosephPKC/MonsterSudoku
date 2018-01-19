@@ -4,6 +4,8 @@
 #include <vector>
 namespace utils {
 #define DEBUG 0
+#define VERBOSE DEBUG || 0
+#define TIME DEBUG || 1
 	enum Error {
 		Success,
 		No_Input,

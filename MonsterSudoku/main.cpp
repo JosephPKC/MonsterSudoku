@@ -43,7 +43,7 @@ Generator gen;
 #define PUZZLE_TEST 0
 #define GEN_TEST 0
 #define REC_TEST 0
-#define SOLVE_TEST 1
+#define SOLVE_TEST 0
 
 int main() {
 #if PUZZLE_TEST
@@ -109,7 +109,10 @@ int main() {
 	Solver s;
 	try {
 		Puzzle p = g.generate(17, 9, 3, 3);
+//		Puzzle p = g.generate("..\\MonsterSudoku\\inputs\\test.txt");
 		std::cout << p << std::endl;
+//		char c;
+//		std::cin >> c;
 		Puzzle ps = s.solve(p, 300);
 		std::cout << ps << std::endl;
 	}
@@ -174,6 +177,7 @@ utils::Error doCommand(std::vector<std::string> inputs) {
 		if(inputs.size() < 2) {
 			return utils::Error::Not_Enough_Args;
 		}
+		Puzzle pz;
 		/* First, check if we are given a file OR -g + 4 parameters */
 		++it;
 		if(it->compare(utils::GEN_ARG) == 0) {
@@ -191,15 +195,21 @@ utils::Error doCommand(std::vector<std::string> inputs) {
 				return res;
 			}
 			/* Generate puzzle */
-
+			Generator g;
+			try {
+				pz = g.generate(m, n, p, q);
+			}
+			catch(utils::Error e) {
+				return e;
+			}
 		}
 		else {
 			/* Generate a puzzle from file */
 			/* Get file path */
 			std::string file_path = *it;
-			Generator G;
+			Generator g;
 			try {
-				G.generate(file_path);
+				pz = g.generate(file_path);
 			}
 			catch(utils::Error e) {
 				return e;
@@ -212,10 +222,19 @@ utils::Error doCommand(std::vector<std::string> inputs) {
 			}
 		}
 		/* Display puzzle */
+		std::cout << pz << std::endl;
 
 		/* Solve puzzle */
+		Solver s;
+		try {
+			Puzzle ps = s.solve(pz, 300);
 
-		/* Display solution & reports */
+			/* Display solution & reports */
+			std::cout << ps << std::endl;
+		}
+		catch(utils::Error e) {
+			return e;
+		}
 	}
 	else if(it->compare(utils::HELP_CMD) == 0) {
 		std::cout << "gen m n p q file_path: Generate a random puzzle with parameters m (initially filled cells), n (size), p (block length), q (block width), and save to file_path. Constraints: 0 < m < n^2, p * q = n, m, n, p, q > 0." << std::endl;

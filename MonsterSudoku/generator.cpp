@@ -126,7 +126,7 @@ Puzzle Generator::generate(int m, int n, int p, int q) {
 		}
 	}
 	/* Just to time the generation algorithm */
-#if DEBUG
+#if TIME
 	auto end = std::chrono::system_clock::now();
 	std::chrono::duration<double> duration = end - start;
 	std::cout << duration.count() << " seconds." << std::endl;

@@ -31,6 +31,7 @@ public:
 	void setDomain(Domain domain);
 	void set(std::size_t value, bool val);
 	void setChosen(std::size_t value);
+	void setEmpty();
 
 	void reset();
 

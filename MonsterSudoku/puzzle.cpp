@@ -113,9 +113,11 @@ void Puzzle::set(std::size_t x, std::size_t y, std::size_t val) {
 
 void Puzzle::restore(std::size_t x, std::size_t y, Domain domain) {
 	if(x >= size() || y >= size()) {
+//		std::cout << "x & y are too big" << std::endl;
 		return;
 	}
-	_sudoku[x][y].setChosen(size());
+	_sudoku[x][y].setEmpty();
+//	std::cout << "new val: " << _sudoku[x][y].getVal() << std::endl;
 	_sudoku[x][y].setDomain(domain);
 }
 
