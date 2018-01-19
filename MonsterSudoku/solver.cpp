@@ -4,13 +4,15 @@ Solver::Solver() {
 	// Nothing
 }
 
-Solver::Solver(bool mrv, bool dh, bool lcv, bool acp, bool mac, bool fc) {
+Solver::Solver(bool mrv, bool dh, bool lcv, bool acp, bool mac, bool fc, bool cpp, bool cp) {
 	_heuristics.hasMRV = mrv;
 	_heuristics.hasDH = dh;
 	_heuristics.hasLCV = lcv;
 	_heuristics.hasACP = acp;
 	_heuristics.hasMAC = mac;
 	_heuristics.hasFC = fc;
+	_heuristics.hasCPP = cpp;
+	_heuristics.hasCP = cp;
 }
 
 Heuristics& Solver::heuristics() {
@@ -20,6 +22,7 @@ Heuristics& Solver::heuristics() {
 Puzzle Solver::solve(Puzzle puzzle, double timeout) {
 	_start = std::chrono::system_clock::now();
 	preSearch(puzzle);
+	auto preSearchEnd = std::chrono::system_clock::now();
 	auto res = search(puzzle, timeout);
 	if(res != utils::Error::Success) {
 		throw res;
@@ -27,7 +30,9 @@ Puzzle Solver::solve(Puzzle puzzle, double timeout) {
 #if TIME
 	auto end = std::chrono::system_clock::now();
 	std::chrono::duration<double> duration = end - _start;
-	std::cout << duration.count() << "s finished." << std::endl;
+	std::cout << "Total Solve Time: " << duration.count() << "s." << std::endl;
+	duration = preSearchEnd - _start;
+	std::cout << "Pre Search Time: " << duration.count() << "s." << std::endl;
 #endif
 	return puzzle;
 }
@@ -141,14 +146,23 @@ void Solver::backtrack(Puzzle& puzzle) {
 }
 
 void Solver::preSearch(Puzzle& puzzle) {
-	// Nothing for now.
-	// Will have arc consistency precursor check
+	// Create a network of Degrees
+
+	// Constraint Propagation Precursor
+	// Perform constraint propagation on the initial set of solved cells.
+	if(!_heuristics.hasCPP) {
+		return;
+	}
+	for(std::size_t x = 0; x < puzzle.size(); ++x) {
+		for(std::size_t y = 0; y < puzzle.size(); ++y) {
+			if(!puzzle.isEmpty(x, y)) {
+				propagateConstraints(puzzle, Position(x, y));
+			}
+		}
+	}
 }
 
 bool Solver::preAssign(Puzzle& puzzle, Position toAssignCell, std::size_t val) {
-	// Nothing for now.
-	// Will contain pre-assignment constraint satisfaction checks
-	// i.e. Forward Checking. If a to be assigned value violates a constraint, don't bother assigning it.
 	// Check if move is legal
 	return isLegal(puzzle, toAssignCell, val);
 }
@@ -157,6 +171,11 @@ void Solver::postAssign(Puzzle& puzzle, Position assignedCell) {
 	// Nothing for now.
 	// Will contain arc consistency propagation.
 	// i.e. From the chosen cell, maintain arc consistency with neighbors, and their neighbors, etc...
+
+	// Constraint Propagation
+	// Perform constraint propagation on the assigned cell.
+	// Also keep a record of the eliminated values.
+	// Forward Check
 }
 
 void Solver::assignValue(Puzzle& puzzle, Position cell, std::size_t value) {
@@ -189,4 +208,26 @@ bool Solver::isLegal(Puzzle puzzle, Position cell, std::size_t value) {
 		}
 	}
 	return true;
+}
+
+void Solver::propagateConstraints(Puzzle& puzzle, Position cell) {
+	std::size_t value = puzzle.access(cell.x, cell.y).getVal();
+	/* Go through each row & column, and remove the value from their domains */
+	for(std::size_t i = 0; i < puzzle.size(); ++i) {
+		if(puzzle.isEmpty(cell.x, i)) {
+			/* Cell that is empty */
+			puzzle.access(cell.x, i).set(value, false);
+		}
+		if(puzzle.isEmpty(i, cell.y)) {
+			puzzle.access(i, cell.y).set(value, false);
+		}
+	}
+	Perimeter p = puzzle.perimeter(cell.x, cell.y);
+	for(std::size_t i = p.t; i <= p.b; ++i) {
+		for(std::size_t j = p.l; j <= p.r; ++j) {
+			if(puzzle.isEmpty(i, j)) {
+				puzzle.access(i, j).set(value, false);
+			}
+		}
+	}
 }

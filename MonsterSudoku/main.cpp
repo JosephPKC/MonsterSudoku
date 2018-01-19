@@ -43,7 +43,7 @@ Generator gen;
 #define PUZZLE_TEST 0
 #define GEN_TEST 0
 #define REC_TEST 0
-#define SOLVE_TEST 0
+#define SOLVE_TEST 1
 
 int main() {
 #if PUZZLE_TEST
@@ -107,12 +107,14 @@ int main() {
 #if SOLVE_TEST
 	Generator g;
 	Solver s;
+	// For the given sudoku
+	// No ACP ~0.49s.
+	// With ACP ~0.27s.
+	s.heuristics().hasCPP = true;
 	try {
-		Puzzle p = g.generate(17, 9, 3, 3);
-//		Puzzle p = g.generate("..\\MonsterSudoku\\inputs\\test.txt");
+//		Puzzle p = g.generate(17, 9, 3, 3);
+		Puzzle p = g.generate("..\\MonsterSudoku\\inputs\\test.txt");
 		std::cout << p << std::endl;
-//		char c;
-//		std::cin >> c;
 		Puzzle ps = s.solve(p, 300);
 		std::cout << ps << std::endl;
 	}

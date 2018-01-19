@@ -16,6 +16,8 @@ struct Heuristics {
 	bool hasACP;
 	bool hasMAC;
 	bool hasFC;
+	bool hasCPP;
+	bool hasCP;
 
 	Heuristics() {
 		hasMRV = false;
@@ -24,10 +26,12 @@ struct Heuristics {
 		hasACP = false;
 		hasMAC = false;
 		hasFC = false;
+		hasCPP = false;
+		hasCP = false;
 	}
 
 	friend std::ostream& operator << (std::ostream& out, const Heuristics& h) {
-		out << h.hasMRV << h.hasDH << h.hasLCV << h.hasACP << h.hasMAC << h.hasFC;
+		out << h.hasMRV << h.hasDH << h.hasLCV << h.hasACP << h.hasMAC << h.hasFC << h.hasCPP << h.hasCP;
 		return out;
 	}
 };
@@ -36,7 +40,7 @@ class Solver {
 public:
 	Solver();
 
-	Solver(bool mrv, bool dh, bool lcv, bool acp, bool mac, bool fc);
+	Solver(bool mrv, bool dh, bool lcv, bool acp, bool mac, bool fc, bool cpp, bool cp);
 
 	Heuristics& heuristics();
 
@@ -64,6 +68,8 @@ private:
 	void assignValue(Puzzle& puzzle, Position cell, std::size_t value);
 	/* Check if a value is legal */
 	bool isLegal(Puzzle puzzle, Position cell, std::size_t value);
+	/* Check Arc Consistency for a cell */
+	void propagateConstraints(Puzzle& puzzle, Position cell);
 };
 
 #endif // SOLVER_H
