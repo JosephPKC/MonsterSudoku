@@ -4,33 +4,24 @@
 
 struct Subrecord {
 	Position position;
-	std::vector<bool> eliminations;
+	std::size_t elimination;
 
-	Subrecord(int size = 0) {
-		for(int i = 0; i < size; ++i) {
-			eliminations.push_back(false);
-		}
+	Subrecord() {
+		elimination = 0;
 	}
 
-	Subrecord(int size, std::size_t x, std::size_t y) {
+	Subrecord(std::size_t x, std::size_t y, std::size_t e) {
 		position = Position(x, y);
-		for(int i = 0; i < size; ++i) {
-			eliminations.push_back(false);
-		}
+		elimination = e;
 	}
 
-	Subrecord(int size, Position position) {
+	Subrecord(Position position, std::size_t e) {
 		this->position = position;
-		for(int i = 0; i < size; ++i) {
-			eliminations.push_back(false);
-		}
+		elimination = e;
 	}
 
 	friend std::ostream& operator <<(std::ostream& out, const Subrecord& s) {
-		out << s.position << ": ";
-		for(utils::vb_cit it = s.eliminations.begin(); it != s.eliminations.end(); ++it) {
-			out << *it << " ";
-		}
+		out << s.position << ": " << s.elimination;
 		return out;
 	}
 };
@@ -65,7 +56,7 @@ public:
 	Recorder();
 
 	void add(Position position, std::size_t value, Domain domain);
-	void addPropagation(Position position, std::vector<bool> eliminations);
+	void addPropagation(Position position, std::size_t elimination);
 
 	Record undo();
 

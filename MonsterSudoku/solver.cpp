@@ -171,11 +171,7 @@ void Solver::backtrack(Puzzle& puzzle) {
 	/* Restore the domains for each propagation */
 	for(std::vector<Subrecord>::iterator it = r.propagations.begin(); it != r.propagations.end(); ++it) {
 		Position p = it->position;
-		for(std::size_t i = 0; i < puzzle.size(); ++i) {
-			if(it->eliminations[i]) {
-				puzzle.access(p.x, p.y).set(i, true);
-			}
-		}
+		puzzle.access(p.x, p.y).set(it->elimination, true);
 	}
 
 	auto end = std::chrono::system_clock::now();
@@ -188,22 +184,21 @@ void Solver::preSearch(Puzzle& puzzle) {
 
 	// Constraint Propagation Precursor
 	// Perform constraint propagation on the initial set of solved cells.
-	if(!_heuristics.hasCPP) {
-		return;
-	}
-	auto start = std::chrono::system_clock::now();
+	if(_heuristics.hasCPP) {
+		auto start = std::chrono::system_clock::now();
 
-	for(std::size_t x = 0; x < puzzle.size(); ++x) {
-		for(std::size_t y = 0; y < puzzle.size(); ++y) {
-			if(!puzzle.isEmpty(x, y)) {
-				propagateConstraints(puzzle, Position(x, y));
+		for(std::size_t x = 0; x < puzzle.size(); ++x) {
+			for(std::size_t y = 0; y < puzzle.size(); ++y) {
+				if(!puzzle.isEmpty(x, y)) {
+					propagateConstraints(puzzle, Position(x, y));
+				}
 			}
 		}
-	}
 
-	auto end = std::chrono::system_clock::now();
-	std::chrono::duration<double> duration = end - start;
-	_logger.log().cppTime += duration.count();
+		auto end = std::chrono::system_clock::now();
+		std::chrono::duration<double> duration = end - start;
+		_logger.log().cppTime += duration.count();
+	}
 }
 
 bool Solver::preAssign(Puzzle& puzzle, Position toAssignCell, std::size_t val) {
@@ -218,6 +213,13 @@ void Solver::postAssign(Puzzle& puzzle, Position assignedCell) {
 
 	// Constraint Propagation
 	// Perform constraint propagation on the assigned cell.
+	if(_heuristics.hasCP) {
+		auto start = std::chrono::system_clock::now();
+		propagateConstraints(puzzle, assignedCell, true);
+		auto end = std::chrono::system_clock::now();
+		std::chrono::duration<double> duration = end - start;
+		_logger.log().cpTime += duration.count();
+	}
 	// Also keep a record of the eliminated values.
 	// Forward Check
 }
@@ -254,16 +256,22 @@ bool Solver::isLegal(Puzzle puzzle, Position cell, std::size_t value) {
 	return true;
 }
 
-void Solver::propagateConstraints(Puzzle& puzzle, Position cell) {
+void Solver::propagateConstraints(Puzzle& puzzle, Position cell, bool record) {
 	std::size_t value = puzzle.access(cell.x, cell.y).getVal();
 	/* Go through each row & column, and remove the value from their domains */
 	for(std::size_t i = 0; i < puzzle.size(); ++i) {
 		if(puzzle.isEmpty(cell.x, i)) {
 			/* Cell that is empty */
 			puzzle.access(cell.x, i).set(value, false);
+			if(record) {
+				_recorder.addPropagation(Position(cell.x, i), value);
+			}
 		}
 		if(puzzle.isEmpty(i, cell.y)) {
 			puzzle.access(i, cell.y).set(value, false);
+			if(record) {
+				_recorder.addPropagation(Position(i, cell.y), value);
+			}
 		}
 	}
 	Perimeter p = puzzle.perimeter(cell.x, cell.y);
@@ -271,6 +279,9 @@ void Solver::propagateConstraints(Puzzle& puzzle, Position cell) {
 		for(std::size_t j = p.l; j <= p.r; ++j) {
 			if(puzzle.isEmpty(i, j)) {
 				puzzle.access(i, j).set(value, false);
+				if(record) {
+					_recorder.addPropagation(Position(i, j), value);
+				}
 			}
 		}
 	}

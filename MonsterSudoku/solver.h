@@ -72,7 +72,7 @@ private:
 	/* Check if a value is legal */
 	bool isLegal(Puzzle puzzle, Position cell, std::size_t value);
 	/* Check Arc Consistency for a cell */
-	void propagateConstraints(Puzzle& puzzle, Position cell);
+	void propagateConstraints(Puzzle& puzzle, Position cell, bool record = false);
 };
 
 #endif // SOLVER_H

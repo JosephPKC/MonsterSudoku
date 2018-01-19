@@ -9,9 +9,8 @@ void Recorder::add(Position position, std::size_t value, Domain domain) {
 	_records.push_back(r);
 }
 
-void Recorder::addPropagation(Position position, std::vector<bool> eliminations) {
-	Subrecord s(eliminations.size(), position);
-	s.eliminations = eliminations;
+void Recorder::addPropagation(Position position, std::size_t elimination) {
+	Subrecord s(position, elimination);
 	std::vector<Record>::iterator it = _records.end();
 	--it;
 	it->propagations.push_back(s);
