@@ -1,16 +1,5 @@
-/* Sudoku includes */
 #include "generator.h"
 #include "solver.h"
-
-/* TODO
- * Sudoku Puzzle Data Structure
- * Sudoku Puzzle Generator
- * Sudoku Puzzle Solver
- * Sudoku Puzzle Book Keeper
- * Book Page Data Structure
- * Sudoku Puzzle Reporter
- * Report Data Structure
- */
 
 /* Some important links:
  * https://www.ics.uci.edu/~rickl/courses/AI-projects/sudoku-solver/SudokuProjectAssignments_20160209.pdf
@@ -18,21 +7,32 @@
  * https://www.ics.uci.edu/~rickl/courses/AI-projects/sudoku-solver/monster-sudoku-final-report-template_rev1_20160310.pdf
  */
 
-/* Valid arguments
- * First argument: Excepts a file path. Here, it will generate a puzzle based on parameters given, or just copy the puzzle in the file.
- * First argumen: Can also be -g followed by four numbers instead of a file path.
- * Optional -v: generate a verbose report. A default report only shows the solution (if any), total time, total search time, and nodes searched. A verbose report also shows, a breakdown for each heuristic and algorithm, number of backtracks, and number of book keep entries.
+/* TODO:
+ * More refactoring of Solver + Main
+ * Implement Guaranteed Solution Generator
+ * Implement Max Degrees to aid MRV in selecting the best cell
+ * Implement LCV for value choosing
+ * Implement AC checks for pp and m
+ * Implement Fc
+ * Implement DLX (Dancing Lights X) by converting Sudoku to a Doubly Linked List Sparse Matrix and into an Exact Cover Problem and performing Algorithm X on it.
  */
 
-/* Examples
- * gen m n p q file_path (only usage)
- * solve file_path -v
- * solve -g m n p q
- * solve -g m n p q -mrv -acp ...
- * help
+/* DLX Stuff
+ * http://buzzard.ups.edu/talks/beezer-2010-AIMS-sudoku.pdf
  */
 
-/* Need a check heuristics method to parse optional args like verbosity */
+/* A Generator that guarantees solvable puzzles:
+ * Fill in the puzzle completely so that it is legal.
+ *		Generate the first row by going in order.
+ *		Then go to the next row and offset it by q.
+ *		If the offset addition forces it to go over n, modulate it and then add 1.
+ *		Continue until puzzle is completely filled.
+ * First, randomly swap any two block rows (entire blocks in a row).
+ * Then, randomly swap any two block columns
+ * Then, within randomly selected block rows, randomly swap any two rows within that block row.
+ * Then, within randomly selected block columns, randomly swap any two columns within that block column.
+ * Then randomly choose and empty out cells up to n^2 - m.
+ */
 
 struct Optionals {
 	Heuristics heuristics;
@@ -43,15 +43,12 @@ struct Optionals {
 	}
 };
 
-void primary();
-utils::Error doCommand(std::vector<std::string> inputs);
+/* Signatures */
+void primary(Generator gen);
+utils::Error doCommand(Generator gen, std::vector<std::string> inputs);
 void error(utils::Error e);
 utils::Error getParameters(std::vector<std::string> inputs, int& m, int& n, int& p, int& q, int skip = 1);
 utils::Error getOptionals(Optionals& options, std::vector<std::string> inputs, int skip = 2);
-
-
-
-Generator gen;
 
 /* Debug and Test Globals */
 #define TEST 0
@@ -139,12 +136,12 @@ int main() {
 	std::cout << s.getLog() << std::endl;
 
 #endif
-
-	primary();
+	Generator gen;
+	primary(gen);
 	return 0;
 }
 
-void primary() {
+void primary(Generator gen) {
 	bool cont = true;			// Control flag for the primary loop
 
 	while(cont) {
@@ -161,7 +158,7 @@ void primary() {
 		}
 
 		/* Do the command */
-		utils::Error res = doCommand(input_tokens);
+		utils::Error res = doCommand(gen, input_tokens);
 		if(res != utils::Error::Success) {
 			error(res);
 			continue;
@@ -169,7 +166,7 @@ void primary() {
 	}
 }
 
-utils::Error doCommand(std::vector<std::string> inputs) {
+utils::Error doCommand(Generator gen, std::vector<std::string> inputs) {
 	/* Check what the command is (first token always) */
 	utils::vs_it it = inputs.begin();
 	if(it->compare(utils::GEN_CMD) == 0) {
@@ -186,7 +183,7 @@ utils::Error doCommand(std::vector<std::string> inputs) {
 		/* Generate puzzle and save to file */
 		Puzzle puzzle = gen.generate(m, n, p, q);
 		try {
-			gen.saveToFile(puzzle, file_path);
+			gen.saveToFile(puzzle, "../MonsterSudoku/inputs/" + file_path);
 		}
 		catch(utils::Error e) {
 			return e;
@@ -248,7 +245,7 @@ utils::Error doCommand(std::vector<std::string> inputs) {
 		/* Solve puzzle */
 		Solver s(options.heuristics);
 		try {
-			Puzzle ps = s.solve(pz, 300);
+			Puzzle ps = s.solve(pz);
 
 			/* Display solution & reports */
 			std::cout << ps << std::endl;

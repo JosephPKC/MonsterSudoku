@@ -40,13 +40,13 @@ class Solver {
 public:
 	Solver();
 
-	Solver(Heuristics heuristics);
+	Solver(const Heuristics& heuristics);
 	Solver(bool mrv, bool dh, bool lcv, bool acp, bool mac, bool fc, bool cpp, bool cp);
 
 	Heuristics& getHeuristics();
 	Log getLog() const;
 
-	Puzzle solve(Puzzle puzzle, double timeout = 300);
+	Puzzle solve(const Puzzle& puzzle, double timeout = 300);
 private:
 	Heuristics _heuristics;
 	Recorder _recorder;
@@ -58,30 +58,30 @@ private:
 	/* Recursive backtracking search algorithm */
 	utils::Error search(Puzzle& puzzle, double timeout);
 	/* Algorithm to select next cell */
-	Position selectNextCell(Puzzle puzzle);
+	Position selectNextCell(const Puzzle& puzzle);
 	/* Algorithm to order values for cell */
-	std::vector<std::size_t> orderValues(Puzzle puzzle, Position cell);
+	std::vector<std::size_t> orderValues(const Puzzle& puzzle, const Position& cell);
 	/* Algorithm to backtrack */
 	void backtrack(Puzzle& puzzle);
 	/* Algorithm for any pre-processing */
 	void preSearch(Puzzle& puzzle);
 	/* Algorithm for any pre-assigment processing */
-	bool preAssign(Puzzle& puzzle, Position toAssignCell, std::size_t val);
+	bool preAssign(Puzzle& puzzle, const Position& toAssignCell, std::size_t val);
 	/* Algorithm for any post-assignment processing */
-	void postAssign(Puzzle& puzzle, Position assignedCell);
+	void postAssign(Puzzle& puzzle, const Position& assignedCell);
 	/* Assign a value to cell */
-	void assignValue(Puzzle& puzzle, Position cell, std::size_t value);
+	void assignValue(Puzzle& puzzle, const Position& cell, std::size_t value);
 	/* Check if a value is legal */
-	bool isLegal(Puzzle puzzle, Position cell, std::size_t value);
+	bool isLegal(const Puzzle& puzzle, const Position& cell, std::size_t value);
 	/* Check Arc Consistency for a cell */
-	void propagateConstraints(Puzzle& puzzle, Position cell, bool record = false);
+	void propagateConstraints(Puzzle& puzzle, const Position& cell, bool record = false);
 
 	/* Heuristic methods */
-	Position selectByMRV(Puzzle puzzle);
-	std::vector<Position> orderByMRV(Puzzle puzzle);
+	Position selectByMRV(const Puzzle& puzzle);
+	std::vector<Position> orderByMRV(const Puzzle& puzzle);
 
 	/* Helper methods */
-	double getDuration(std::chrono::time_point<std::chrono::system_clock> start) const;
+	double getDuration(const std::chrono::time_point<std::chrono::system_clock>& start) const;
 };
 
 #endif // SOLVER_H

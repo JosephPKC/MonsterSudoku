@@ -28,7 +28,7 @@ public:
 	Cell(int size);
 
 	Domain getDomain();
-	void setDomain(Domain domain);
+	void setDomain(const Domain& domain);
 	void set(std::size_t value, bool val);
 	void setEmpty();
 	void setValue(std::size_t value);

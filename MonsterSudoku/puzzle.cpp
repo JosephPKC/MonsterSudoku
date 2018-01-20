@@ -38,7 +38,7 @@ Puzzle::Puzzle(char** sudoku, int m, int n, int p, int q) {
 
 Puzzle::Puzzle(const Puzzle& p) {
 	_parameters = Parameters(p.getM(), p.getN(), p.getP(), p.getQ());
-	/* Copy the sudoku */
+	/*  the sudoku */
 	_sudoku = utils::makeCopy<Cell>(p.getSudoku(), getSize());
 }
 
@@ -46,7 +46,7 @@ Puzzle& Puzzle::operator =(const Puzzle& p) {
 	/* Delete old puzzle */
 	utils::deleteArray<Cell>(_sudoku, getSize());
 	_parameters = Parameters(p.getM(), p.getN(), p.getP(), p.getQ());
-	/* Copy the sudoku */
+	/*  the sudoku */
 	_sudoku = utils::makeCopy<Cell>(p.getSudoku(), getSize());
 	return *this;
 }
@@ -83,17 +83,17 @@ std::size_t Puzzle::getSize() const {
 	return (std::size_t)_parameters.n;
 }
 
-Box Puzzle::getBox(std::size_t x, std::size_t y) const {
+Block Puzzle::getBlock(std::size_t x, std::size_t y) const {
 	std::size_t t, b, l, r;
 	t = (x / getP()) * getP();
 	b = t + getP() - 1;
 	l = (y / getQ()) * getQ();
 	r = l + getQ() - 1;
-	return Box(t, b, l, r);
+	return Block(t, b, l, r);
 }
 
-Box Puzzle::getBox(Position p) const {
-	return getBox(p.x, p.y);
+Block Puzzle::getBlock(Position p) const {
+	return getBlock(p.x, p.y);
 }
 
 std::size_t Puzzle::getDomainSize(std::size_t x, std::size_t y) const {
@@ -110,7 +110,7 @@ std::size_t Puzzle::getDomainSize(std::size_t x, std::size_t y) const {
 	return count;
 }
 
-std::size_t Puzzle::getDomainSize(Position p) const {
+std::size_t Puzzle::getDomainSize(const Position& p) const {
 	return getDomainSize(p.x, p.y);
 }
 
@@ -121,7 +121,7 @@ Domain Puzzle::getDomain(std::size_t x, std::size_t y) const {
 	return access(x, y).getDomain();
 }
 
-Domain Puzzle::getDomain(Position p) const {
+Domain Puzzle::getDomain(const Position& p) const {
 	return getDomain(p.x, p.y);
 }
 
@@ -154,7 +154,7 @@ std::vector<Position> Puzzle::getNeighbors(std::size_t x, std::size_t y, bool on
 		}
 	}
 	/* Box */
-	Box perim = getBox(x, y);
+	Block perim = getBlock(x, y);
 	for(std::size_t i = perim.t; i <= perim.b; ++i) {
 		for(std::size_t j = perim.l; j <= perim.r; ++j) {
 			/* Ignore the chosen cell, and ignore cells that were already in the same row and column */
@@ -173,7 +173,7 @@ std::vector<Position> Puzzle::getNeighbors(std::size_t x, std::size_t y, bool on
 	return neighbors;
 }
 
-std::vector<Position> Puzzle::getNeighbors(Position p, bool onlyEmpty) const {
+std::vector<Position> Puzzle::getNeighbors(const Position& p, bool onlyEmpty) const {
 	return getNeighbors(p.x, p.y, onlyEmpty);
 }
 
@@ -195,7 +195,7 @@ std::vector<bool> Puzzle::getNeighborValues(std::size_t x, std::size_t y) const 
 		}
 	}
 	/* Get Block Indices */
-	Box perim = getBox(x, y);
+	Block perim = getBlock(x, y);
 	/* Check block */
 	for(std::size_t i = perim.t; i <= perim.b; ++i) {
 		for(std::size_t j = perim.l; j <= perim.r; ++j) {
@@ -207,7 +207,7 @@ std::vector<bool> Puzzle::getNeighborValues(std::size_t x, std::size_t y) const 
 	return values;
 }
 
-std::vector<bool> Puzzle::getNeighborValues(Position p) const {
+std::vector<bool> Puzzle::getNeighborValues(const Position& p) const {
 	return getNeighborValues(p.x, p.y);
 }
 
@@ -231,11 +231,11 @@ Cell Puzzle::access(std::size_t x, std::size_t y) const {
 	return _sudoku[x][y];
 }
 
-Cell& Puzzle::access(Position p) {
+Cell& Puzzle::access(const Position& p) {
 	return access(p.x, p.y);
 }
 
-Cell Puzzle::access(Position p) const {
+Cell Puzzle::access(const Position& p) const {
 	return access(p.x, p.y);
 }
 
@@ -246,11 +246,11 @@ void Puzzle::set(std::size_t x, std::size_t y, std::size_t val) {
 	_sudoku[x][y].setValue (val);
 }
 
-void Puzzle::set(Position p, std::size_t val) {
+void Puzzle::set(const Position& p, std::size_t val) {
 	set(p.x, p.y, val);
 }
 
-void Puzzle::restore(std::size_t x, std::size_t y, Domain domain) {
+void Puzzle::restore(std::size_t x, std::size_t y, const Domain& domain) {
 	if(x >= getSize() || y >= getSize()) {
 		return;
 	}
@@ -258,7 +258,7 @@ void Puzzle::restore(std::size_t x, std::size_t y, Domain domain) {
 	_sudoku[x][y].setDomain(domain);
 }
 
-void Puzzle::restore(Position p, Domain domain) {
+void Puzzle::restore(const Position& p, const Domain& domain) {
 	restore(p.x, p.y, domain);
 }
 
@@ -277,7 +277,7 @@ void Puzzle::reset(std::size_t x, std::size_t y) {
 	_sudoku[x][y].reset();
 }
 
-void Puzzle::reset(Position p) {
+void Puzzle::reset(const Position& p) {
 	reset(p.x, p.y);
 }
 
@@ -356,7 +356,7 @@ bool Puzzle::isLegal(std::size_t x, std::size_t y) const {
 		}
 	}
 	/* Get Block Indices */
-	Box perim = getBox(x, y);
+	Block perim = getBlock(x, y);
 	/* Check block */
 	for(std::size_t i = perim.t; i <= perim.b; ++i) {
 		for(std::size_t j = perim.l; j <= perim.r; ++j) {
@@ -368,7 +368,7 @@ bool Puzzle::isLegal(std::size_t x, std::size_t y) const {
 	return true;
 }
 
-bool Puzzle::isLegal(Position p) const {
+bool Puzzle::isLegal(const Position& p) const {
 	return isLegal(p.x, p.y);
 }
 
@@ -379,7 +379,7 @@ bool Puzzle::isEmpty(std::size_t x, std::size_t y) const {
 	return access(x, y).getValue() == getSize();
 }
 
-bool Puzzle::isEmpty(Position p) const {
+bool Puzzle::isEmpty(const Position& p) const {
 	return isEmpty(p.x, p.y);
 }
 
@@ -387,7 +387,7 @@ bool Puzzle::isSameRow(std::size_t x1, std::size_t y1, std::size_t x2, std::size
 	return x1 == x2 && y1 != y2;
 }
 
-bool Puzzle::isSameRow(Position p1, Position p2) const {
+bool Puzzle::isSameRow(const Position& p1, const Position& p2) const {
 	return isSameRow(p1.x, p1.y, p2.x, p2.y);
 }
 
@@ -395,14 +395,14 @@ bool Puzzle::isSameCol(std::size_t x1, std::size_t y1, std::size_t x2, std::size
 	return x1 != x2 && y1 == y2;
 }
 
-bool Puzzle::isSameCol(Position p1, Position p2) const {
+bool Puzzle::isSameCol(const Position& p1, const Position& p2) const {
 	return isSameCol(p1.x, p2.y, p2.x, p2.y);
 }
 
 bool Puzzle::isSameBox(std::size_t x1, std::size_t y1, std::size_t x2, std::size_t y2) const {
-	return getBox(x1, y1) == getBox(x2, y2);
+	return getBlock(x1, y1) == getBlock(x2, y2);
 }
 
-bool Puzzle::isSameBox(Position p1, Position p2) const {
+bool Puzzle::isSameBox(const Position& p1, const Position& p2) const {
 	return isSameBox(p1.x, p1.y, p2.x, p2.y);
 }

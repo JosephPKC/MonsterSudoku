@@ -3,11 +3,13 @@
 #include <sstream>
 #include <vector>
 namespace utils {
+	/* Testing comments control */
 #define GLOBAL 0
 #define PAUSE GLOBAL || 0
 #define DEBUG GLOBAL || 0
 #define VERBOSE GLOBAL || 0
 #define TIME GLOBAL || 0
+	/* Error enumeration */
 	enum Error {
 		Success,
 		No_Input,
@@ -23,12 +25,13 @@ namespace utils {
 		No_Empty_Cells,
 		No_More_Values
 	};
-
+	/* Typedefs */
 	typedef std::vector<std::string>::iterator vs_it;	//Typedef for easier typing
 	typedef std::vector<bool>::iterator vb_it;
 	typedef std::vector<bool>::const_iterator vb_cit;
 
-	const std::string GEN_ARG = "-g";			// Argument to gen puzzles
+	/* Argument and Command Constants */
+	const std::string GEN_ARG = "-g";
 	const std::string VERB_ARG = "-v";
 	const std::string CPP_ARG = "-cpp";
 	const std::string CP_ARG = "-cp";
@@ -40,15 +43,17 @@ namespace utils {
 	const std::string FC_ARG = "-fc";
 	const std::string ALL_ARG = "-all";
 
-	const std::string GEN_CMD = "gen";			// Command to gen a puzzle to file
-	const std::string SOLVE_CMD = "solve";		// Command to solve puzzle
-	const std::string HELP_CMD = "help";		// Command to display usages
+	const std::string GEN_CMD = "gen";
+	const std::string SOLVE_CMD = "solve";
+	const std::string HELP_CMD = "help";
 
+	/* Utility methods */
 	std::vector<std::string> splitString(const std::string& s, char delimiter);
 	int convertCharToIndex(char c);
 	char convertIndexToChar(std::size_t i);
 	std::vector<bool> getDefaultBools(int size, bool val);
 
+	/* Template methods */
 	template <typename T>
 	T* create(std::size_t size);
 	template <typename T>

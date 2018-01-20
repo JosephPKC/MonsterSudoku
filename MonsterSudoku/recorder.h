@@ -36,7 +36,7 @@ struct Record {
 		value = 0;
 	}
 
-	Record(Position position, std::size_t value, Domain domain) {
+	Record(const Position& position, std::size_t value, const Domain& domain) {
 		this->position = position;
 		this->value = value;
 		this->previousDomain = domain;
@@ -55,8 +55,8 @@ class Recorder {
 public:
 	Recorder();
 
-	void add(Position position, std::size_t value, Domain domain);
-	void addPropagation(Position position, std::size_t elimination);
+	void add(const Position& position, std::size_t value, const Domain& domain);
+	void addPropagation(const Position& position, std::size_t elimination);
 
 	Record undo();
 

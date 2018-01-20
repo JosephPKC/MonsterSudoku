@@ -4,7 +4,7 @@
 
 struct Log {
 	/* Time stats */
-	double totalTime;
+	long double totalTime;
 	double preTime;
 	double btTime;
 	double cppTime;
@@ -18,6 +18,7 @@ struct Log {
 
 	/* Counts */
 	int nodes;
+	int allNodes;
 	int deadEnds;
 
 	/* Statuses */
@@ -38,6 +39,7 @@ struct Log {
 		macTime = 0;
 		fcTime = 0;
 		nodes = 0;
+		allNodes = 0;
 		deadEnds = 0;
 		solved = false;
 		solvable = false;
@@ -45,7 +47,7 @@ struct Log {
 	}
 
 	friend std::ostream& operator <<(std::ostream& out, const Log& l) {
-		out << "Total: " << l.totalTime << "s, Pre: " << l.preTime << "s, Backtrack: " << l.btTime << "s, CPP: " << l.cppTime << "s, CP: " << l.cpTime << "s, MRV: " << l.mrvTime << "s, LCV: " << l.lcvTime << "s, MD: " << l.mdTime << "s, ACP: " << l.acpTime << "s, MAC: " << l.macTime << "s, FC: " << l.fcTime << "s, Nodes: " << l.nodes << ", Dead Ends: " << l.deadEnds << ", Solved: " << l.solved << ", Solvable: " << l.solvable << ", Timeout: " << l.timeout;
+		out << "Total: " << l.totalTime << "s, Pre: " << l.preTime << "s, Backtrack: " << l.btTime << "s, CPP: " << l.cppTime << "s, CP: " << l.cpTime << "s, MRV: " << l.mrvTime << "s, LCV: " << l.lcvTime << "s, MD: " << l.mdTime << "s, ACP: " << l.acpTime << "s, MAC: " << l.macTime << "s, FC: " << l.fcTime << "s, Nodes: " << l.nodes << ", All Nodes: " << l.allNodes << ", Dead Ends: " << l.deadEnds << ", Solved: " << l.solved << ", Solvable: " << l.solvable << ", Timeout: " << l.timeout;
 		return out;
 	}
 };

@@ -4,12 +4,12 @@ Recorder::Recorder() {
 	// Nothing
 }
 
-void Recorder::add(Position position, std::size_t value, Domain domain) {
+void Recorder::add(const Position& position, std::size_t value, const Domain& domain) {
 	Record r(position, value, domain);
 	_records.push_back(r);
 }
 
-void Recorder::addPropagation(Position position, std::size_t elimination) {
+void Recorder::addPropagation(const Position& position, std::size_t elimination) {
 	Subrecord s(position, elimination);
 	std::vector<Record>::iterator it = _records.end();
 	--it;

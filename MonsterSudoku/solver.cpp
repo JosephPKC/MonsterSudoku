@@ -4,7 +4,7 @@ Solver::Solver() {
 	// Nothing
 }
 
-Solver::Solver(Heuristics heuristics) {
+Solver::Solver(const Heuristics& heuristics) {
 	_heuristics = heuristics;
 }
 
@@ -27,17 +27,18 @@ Log Solver::getLog() const {
 	return _logger.log();
 }
 
-Puzzle Solver::solve(Puzzle puzzle, double timeout) {
+Puzzle Solver::solve(const Puzzle& puzzle, double timeout) {
 	/* Initialize */
 	_logger = Logger();
 	_start = std::chrono::system_clock::now();
 
+	Puzzle puzzleC = puzzle;
 	/* Pre-process */
-	preSearch(puzzle);
+	preSearch(puzzleC);
 	_logger.log().preTime = getDuration(_start);
 
 	/* Search */
-	utils::Error res = search(puzzle, timeout);
+	utils::Error res = search(puzzleC, timeout);
 
 	/* Search Results */
 	if(res != utils::Error::Success) {
@@ -57,12 +58,14 @@ Puzzle Solver::solve(Puzzle puzzle, double timeout) {
 	/* Success: Solvable and Solved */
 	_logger.log().solvable = true;
 	_logger.log().solved = true;
+	std::cout << "Grabbing total time" << std::endl;
 	_logger.log().totalTime = getDuration(_start);
+	std::cout << "Got total time" << std::endl;
 
 	/* Clean up  */
 	_recorder = Recorder();
 //	utils::deleteArray<int>(_degrees, puzzle.getSize());
-	return puzzle;
+	return puzzleC;
 }
 
 utils::Error Solver::search(Puzzle& puzzle, double timeout) {
@@ -70,16 +73,17 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 	char c;
 	std::cin >> c;
 #endif
+
 	/* Check if done (base case) */
 	if(puzzle.isSolved()) {
 		return utils::Error::Success;
 	}
+
 	/* Check for timeout (fail case) */
-	auto current = std::chrono::system_clock::now();
-	std::chrono::duration<double> duration = current - _start;
-	if(duration.count() >= timeout) {
+	if(getDuration(_start) >= timeout) {
 		return utils::Error::Timeout;
 	}
+
 	/* Select a cell */
 	Position chosen;
 	try {
@@ -88,61 +92,76 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 	catch(utils::Error e) {
 		return e;
 	}
+
 #if DEBUG
 	std::cout << "Chosen: " << chosen << " -Domain: " << puzzle.getDomainSize(chosen.x, chosen.y) << std::endl;
 #endif
+
 	/* Get domain order for the cell */
 	std::vector<std::size_t> values = orderValues(puzzle, chosen);
-	/* Check if there are values */
 	if(values.empty()) {
 		return utils::Error::No_More_Values;
 	}
 
 	/* While there are still values, try to assign that value to the cell */
 	while(!values.empty()) {
+
 #if DEBUG
 		std::cout << "Value Chosen: " << *values.begin() << std::endl;
 #endif
+
+		_logger.log().allNodes += 1;
+
 		/* Do pre assignment processing */
 		if(preAssign(puzzle, chosen, *values.begin())) {
 			_logger.log().nodes += 1;
+
 			/* Assign the value to the cell */
 			assignValue(puzzle, chosen, *values.begin());
+
 #if DEBUG
 			std::cout << puzzle << std::endl;
 #endif
+
 			/* Do post assignment processing */
 			postAssign(puzzle, chosen);
+
 			/* Recur, or try a new value now */
 			auto res = search(puzzle, timeout);
 			if(res == utils::Error::Success) {
 				return res;
 			}
 			else if(res != utils::Error::Timeout) {
+
 #if DEBUG
 				std::cout << "Backtracking: " << chosen << " & " << *values.begin() << std::endl;
 #endif
+
 				_logger.log().deadEnds += 1;
 				backtrack(puzzle);
+
 #if DEBUG
 				std::cout << "Backtracked puzzle:\n" << puzzle << std::endl;
 #endif
-//				puzzle.access(chosen.x, chosen.y).set(*values.begin(), false);
+
 				values.erase(values.begin());
 			}
 			else {
+
 #if DEBUG
 				std::cout << "Timeout" << std::endl;
 #endif
+
 				return res;
 			}
 		}
 		else {
 			/* Remove value from domain */
+
 #if DEBUG
 			std::cout << "Value: " << *values.begin() << " not legal" << std::endl;
 #endif
-//			puzzle.access(chosen.x, chosen.y).set(*values.begin(), false);
+
 			values.erase(values.begin());
 		}
 	}
@@ -150,10 +169,11 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 #if DEBUG
 	std::cout << "No more values" << std::endl;
 #endif
+
 	return utils::Error::No_More_Values;
 }
 
-Position Solver::selectNextCell(Puzzle puzzle) {
+Position Solver::selectNextCell(const Puzzle& puzzle) {
 	/* MRV */
 	if(_heuristics.hasMRV) {
 		if(_heuristics.hasMD) {
@@ -169,20 +189,7 @@ Position Solver::selectNextCell(Puzzle puzzle) {
 		}
 	}
 	else if(_heuristics.hasMD) {
-		int max = -1;
-		Position largest = Position(puzzle.getSize(), puzzle.getSize());
-		for(std::size_t x = 0; x < puzzle.getSize(); ++x) {
-			for(std::size_t y = 0; y < puzzle.getSize(); ++y) {
-				if(puzzle.isEmpty(x, y) && _degrees[x][y] > max) {
-					max = _degrees[x][y];
-					largest = Position(x, y);
-				}
-			}
-		}
-		if(max == -1) {
-			throw utils::Error::No_Empty_Cells;
-		}
-		return largest;
+
 	}
 	else {
 		/* Get the next empty cell */
@@ -197,7 +204,7 @@ Position Solver::selectNextCell(Puzzle puzzle) {
 	}
 }
 
-std::vector<std::size_t> Solver::orderValues(Puzzle puzzle, Position cell) {
+std::vector<std::size_t> Solver::orderValues(const Puzzle& puzzle, const Position& cell) {
 	std::vector<std::size_t> values;
 	Domain domain = puzzle.getDomain(cell.x, cell.y);
 	for(std::size_t i = 0; i < puzzle.getSize(); ++i) {
@@ -212,18 +219,20 @@ void Solver::backtrack(Puzzle& puzzle) {
 	auto start = std::chrono::system_clock::now();
 
 	Record r = _recorder.undo();
-//	std::cout << "Undo this record: " << r << std::endl;
+
+#if DEBUG
+	std::cout << "Undo this record: " << r << std::endl;
+#endif
+
 	/* Unassign the cell that was assigned, and restore its domain */
-	puzzle.restore(r.position.x, r.position.y, r.previousDomain);
+	puzzle.restore(r.position, r.previousDomain);
+
 	/* Restore the domains for each propagation */
 	for(std::vector<Subrecord>::iterator it = r.propagations.begin(); it != r.propagations.end(); ++it) {
 		Position p = it->position;
 		puzzle.access(p.x, p.y).set(it->elimination, true);
 	}
-
-	auto end = std::chrono::system_clock::now();
-	std::chrono::duration<double> duration = end - start;
-	_logger.log().btTime += duration.count();
+	_logger.log().btTime += getDuration(start);
 }
 
 void Solver::preSearch(Puzzle& puzzle) {
@@ -272,19 +281,16 @@ void Solver::preSearch(Puzzle& puzzle) {
 				}
 			}
 		}
-
-		auto end = std::chrono::system_clock::now();
-		std::chrono::duration<double> duration = end - start;
-		_logger.log().cppTime += duration.count();
+		_logger.log().cppTime += getDuration(start);
 	}
 }
 
-bool Solver::preAssign(Puzzle& puzzle, Position toAssignCell, std::size_t val) {
+bool Solver::preAssign(Puzzle& puzzle, const Position& toAssignCell, std::size_t val) {
 	// Check if move is legal
 	return isLegal(puzzle, toAssignCell, val);
 }
 
-void Solver::postAssign(Puzzle& puzzle, Position assignedCell) {
+void Solver::postAssign(Puzzle& puzzle, const Position& assignedCell) {
 	// Nothing for now.
 	// Will contain arc consistency propagation.
 	// i.e. From the chosen cell, maintain arc consistency with neighbors, and their neighbors, etc...
@@ -294,15 +300,13 @@ void Solver::postAssign(Puzzle& puzzle, Position assignedCell) {
 	if(_heuristics.hasCP) {
 		auto start = std::chrono::system_clock::now();
 		propagateConstraints(puzzle, assignedCell, true);
-		auto end = std::chrono::system_clock::now();
-		std::chrono::duration<double> duration = end - start;
-		_logger.log().cpTime += duration.count();
+		_logger.log().cpTime += getDuration(start);
 	}
 	// Also keep a record of the eliminated values.
 	// Forward Check
 }
 
-void Solver::assignValue(Puzzle& puzzle, Position cell, std::size_t value) {
+void Solver::assignValue(Puzzle& puzzle, const Position& cell, std::size_t value) {
 	Domain previous = puzzle.access(cell.x, cell.y).getDomain();
 	puzzle.set(cell.x, cell.y, value);
 	_recorder.add(cell, value, previous);
@@ -317,7 +321,7 @@ void Solver::assignValue(Puzzle& puzzle, Position cell, std::size_t value) {
 //	}
 }
 
-bool Solver::isLegal(Puzzle puzzle, Position cell, std::size_t value) {
+bool Solver::isLegal(const Puzzle& puzzle, const Position& cell, std::size_t value) {
 	if(value == puzzle.getSize()) {
 		return true;
 	}
@@ -332,7 +336,7 @@ bool Solver::isLegal(Puzzle puzzle, Position cell, std::size_t value) {
 		}
 	}
 
-	Box p = puzzle.getBox(cell.x, cell.y);
+	Block p = puzzle.getBlock(cell.x, cell.y);
 	for(std::size_t i = p.t; i <= p.b; ++i) {
 		for(std::size_t j = p.l; j <= p.r; ++j) {
 			if(i != x && j != y && !puzzle.isEmpty(i, j) && puzzle.access(i, j).getValue() == value) {
@@ -343,7 +347,7 @@ bool Solver::isLegal(Puzzle puzzle, Position cell, std::size_t value) {
 	return true;
 }
 
-void Solver::propagateConstraints(Puzzle& puzzle, Position cell, bool record) {
+void Solver::propagateConstraints(Puzzle& puzzle, const Position& cell, bool record) {
 	std::size_t value = puzzle.access(cell.x, cell.y).getValue();
 	/* Go through each row & column, and remove the value from their domains */
 	for(std::size_t i = 0; i < puzzle.getSize(); ++i) {
@@ -361,7 +365,7 @@ void Solver::propagateConstraints(Puzzle& puzzle, Position cell, bool record) {
 			}
 		}
 	}
-	Box p = puzzle.getBox(cell.x, cell.y);
+	Block p = puzzle.getBlock(cell.x, cell.y);
 	for(std::size_t i = p.t; i <= p.b; ++i) {
 		for(std::size_t j = p.l; j <= p.r; ++j) {
 			if(puzzle.isEmpty(i, j)) {
@@ -374,7 +378,7 @@ void Solver::propagateConstraints(Puzzle& puzzle, Position cell, bool record) {
 	}
 }
 
-Position Solver::selectByMRV(Puzzle puzzle) {
+Position Solver::selectByMRV(const Puzzle& puzzle) {
 	auto start = std::chrono::system_clock::now();
 
 	/* Find the smallest domain size */
@@ -396,7 +400,7 @@ Position Solver::selectByMRV(Puzzle puzzle) {
 	return smallest;
 }
 
-std::vector<Position> Solver::orderByMRV(Puzzle puzzle) {
+std::vector<Position> Solver::orderByMRV(const Puzzle& puzzle) {
 //	auto start = std::chrono::system_clock::now();
 
 //	/* Find the smallest domain size */
@@ -437,8 +441,8 @@ std::vector<Position> Solver::orderByMRV(Puzzle puzzle) {
 
 }
 
-double Solver::getDuration(std::chrono::time_point<std::chrono::system_clock> start) const {
+double Solver::getDuration(const std::chrono::time_point<std::chrono::system_clock>& start) const {
 	auto end = std::chrono::system_clock::now();
-	std::chrono::duration<double> duration = end - start;
+	std::chrono::duration<long double> duration = end - start;
 	return duration.count();
 }

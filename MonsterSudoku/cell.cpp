@@ -15,7 +15,7 @@ Domain Cell::getDomain() {
 	return _domain;
 }
 
-void Cell::setDomain(Domain domain) {
+void Cell::setDomain(const Domain& domain) {
 	_domain = domain;
 }
 
