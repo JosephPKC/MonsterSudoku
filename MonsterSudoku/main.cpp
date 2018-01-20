@@ -54,10 +54,11 @@ utils::Error getOptionals(Optionals& options, std::vector<std::string> inputs, i
 Generator gen;
 
 /* Debug and Test Globals */
-#define PUZZLE_TEST 0
-#define GEN_TEST 0
-#define REC_TEST 0
-#define SOLVE_TEST 0
+#define TEST 0
+#define PUZZLE_TEST TEST || 0
+#define GEN_TEST TEST || 0
+#define REC_TEST TEST || 0
+#define SOLVE_TEST TEST || 0
 
 int main() {
 #if PUZZLE_TEST
@@ -111,8 +112,8 @@ int main() {
 #endif
 #if REC_TEST
 	Recorder r;
-	r.add(0, Position(0, 0), 1, Domain(4));
-	r.addPropagation(Position(0, 1), utils::getDefaultBools(4, false));
+	r.add(Position(0, 0), 1, Domain(4));
+	r.addPropagation(Position(0, 1), 4);
 	std::cout << r << std::endl;
 	Record l = r.undo();
 	std::cout << l << std::endl;
@@ -124,7 +125,7 @@ int main() {
 	// For the given sudoku
 	// No ACP ~0.49s.
 	// With ACP ~0.27s.
-	s.heuristics().hasCPP = true;
+	s.getHeuristics().hasCPP = true;
 	try {
 //		Puzzle p = g.generate(17, 9, 3, 3);
 		Puzzle p = g.generate("..\\MonsterSudoku\\inputs\\test.txt");
@@ -135,7 +136,7 @@ int main() {
 	catch(utils::Error e) {
 		error(e);
 	}
-	std::cout << s.log() << std::endl;
+	std::cout << s.getLog() << std::endl;
 
 #endif
 
@@ -231,7 +232,7 @@ utils::Error doCommand(std::vector<std::string> inputs) {
 			std::string file_path = *it;
 			Generator g;
 			try {
-				pz = g.generate(file_path);
+				pz = g.generate("../MonsterSudoku/inputs/" + file_path);
 			}
 			catch(utils::Error e) {
 				return e;
@@ -252,12 +253,12 @@ utils::Error doCommand(std::vector<std::string> inputs) {
 			/* Display solution & reports */
 			std::cout << ps << std::endl;
 			if(options.verbose) {
-				std::cout << s.log() << std::endl;
+				std::cout << s.getLog() << std::endl;
 			}
 		}
 		catch(utils::Error e) {
 			if(options.verbose && (e == utils::Error::Timeout || e == utils::Error::No_More_Values)) {
-				std::cout << s.log() << std::endl;
+				std::cout << s.getLog() << std::endl;
 			}
 			return e;
 		}

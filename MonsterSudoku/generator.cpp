@@ -1,7 +1,6 @@
 #include "generator.h"
 
 Generator::Generator() {
-	// Set seed
 	std::srand(std::time(nullptr));
 	_timeout = 300;
 }
@@ -34,12 +33,12 @@ Puzzle Generator::generate(std::string path) {
 			}
 			/* The next lines are the puzzle */
 			Puzzle puzzle(m, n, p, q);
-			for(std::size_t x = 0; x < puzzle.size(); ++x) {
-				for(std::size_t y = 0; y < puzzle.size(); ++y) {
+			for(std::size_t x = 0; x < puzzle.getSize(); ++x) {
+				for(std::size_t y = 0; y < puzzle.getSize(); ++y) {
 					char c;
 					in >> c;
 					if(c != '.') {
-						puzzle.access(x, y).setChosen(utils::convertCharToIndex (c));
+						puzzle.access(x, y).setValue(utils::convertCharToIndex (c));
 					}
 				}
 			}
@@ -76,8 +75,8 @@ Puzzle Generator::generate(int m, int n, int p, int q) {
 	while(reset) {
 		/* Generate a list of empty cells */
 		std::vector<Position> emptyCells;
-		for(std::size_t x = 0; x < puzzle.size(); ++x) {
-			for(std::size_t y = 0; y < puzzle.size(); ++y) {
+		for(std::size_t x = 0; x < puzzle.getSize(); ++x) {
+			for(std::size_t y = 0; y < puzzle.getSize(); ++y) {
 				emptyCells.push_back(Position(x, y));
 			}
 		}
@@ -103,7 +102,7 @@ Puzzle Generator::generate(int m, int n, int p, int q) {
 			/* Remove chosen cell from empty cells */
 			emptyCells.erase(emptyCells.begin() + index);
 			/* Create a list of possible values for the cell */
-			std::vector<bool> values = puzzle.neighborValues(x, y);
+			std::vector<bool> values = puzzle.getNeighborValues(x, y);
 			/* Invert the values list to get legal values */
 			std::vector<std::size_t> legal_values;
 			for(std::size_t i = 0; i < values.size(); ++i) {
@@ -140,12 +139,12 @@ void Generator::saveToFile(const Puzzle& puzzle, std::string path) {
 	if(out.is_open()) {
 		/* File found */
 		/* Write parameters */
-		out << puzzle.parameters() << std::endl;
+		out << puzzle.getParameters() << std::endl;
 		/* Write puzzle */
-		for(std::size_t x = 0; x < puzzle.size(); ++x) {
-			for(std::size_t y = 0; y < puzzle.size(); ++y) {
-				if(puzzle.access(x, y).getVal () < puzzle.size()) {
-					out << utils::convertIndexToChar (puzzle.access(x, y).getVal());
+		for(std::size_t x = 0; x < puzzle.getSize(); ++x) {
+			for(std::size_t y = 0; y < puzzle.getSize(); ++y) {
+				if(puzzle.access(x, y).getValue () < puzzle.getSize()) {
+					out << utils::convertIndexToChar (puzzle.access(x, y).getValue());
 				}
 				else {
 					out << ".";

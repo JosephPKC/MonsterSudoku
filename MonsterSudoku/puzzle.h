@@ -24,20 +24,24 @@ struct Parameters {
 	}
 };
 
-struct Perimeter {
+struct Box {
 	std::size_t t, b, l, r;
-	Perimeter() {
+	Box() {
 		t = 0;
 		b = 0;
 		l = 0;
 		r = 0;
 	}
 
-	Perimeter(std::size_t t, std::size_t b, std::size_t l, std::size_t r) {
+	Box(std::size_t t, std::size_t b, std::size_t l, std::size_t r) {
 		this->t = t;
 		this->b = b;
 		this->l = l;
 		this->r = r;
+	}
+
+	friend bool operator ==(const Box& l, const Box& r) {
+		return l.t == r.t && l.b == r.b && l.l == r.l && l.r == r.r;
 	}
 };
 
@@ -72,48 +76,58 @@ public:
 	Puzzle& operator =(const Puzzle& p);
 	~Puzzle();
 
-	Cell** sudoku() const;
+	Cell** getSudoku() const;
+	Parameters getParameters() const;
+	int getM() const;
+	int getN() const;
+	int getP() const;
+	int getQ() const;
+	std::size_t getSize() const;
+	Box getBox(std::size_t x, std::size_t y) const;
+	Box getBox(Position p) const;
+	std::size_t getDomainSize(std::size_t x, std::size_t y) const;
+	std::size_t getDomainSize(Position p) const;
+	Domain getDomain(std::size_t x, std::size_t y) const;
+	Domain getDomain(Position p) const;
 
-	Parameters parameters() const;
-
-	int m() const;
-	int n() const;
-	int p() const;
-	int q() const;
-
-	std::size_t size() const;
+	std::vector<Position> getNeighbors(std::size_t x, std::size_t y, bool onlyEmpty = false) const;
+	std::vector<Position> getNeighbors(Position p, bool onlyEmpty = false) const;
+	std::vector<bool> getNeighborValues(std::size_t x, std::size_t y) const;
+	std::vector<bool> getNeighborValues(Position p) const;
 
 	Cell& access(std::size_t x, std::size_t y);
 	Cell access(std::size_t x, std::size_t y) const;
+	Cell& access(Position p);
+	Cell access(Position p) const;
 	void set(std::size_t x, std::size_t y, std::size_t val);
+	void set(Position p, std::size_t val);
 	void restore(std::size_t x, std::size_t y, Domain domain);
+	void restore(Position p, Domain domain);
 
 	void reset();
 	void reset(std::size_t x, std::size_t y);
-
-	std::vector<bool> neighborValues(std::size_t x, std::size_t y) const;
+	void reset(Position p);
 
 	friend std::ostream& operator << (std::ostream& out, const Puzzle& p);
 
 	bool isComplete() const;
 	bool isSolved() const;
-
 	bool isLegal() const;
+
 	bool isLegal(std::size_t x, std::size_t y) const;
-
+	bool isLegal(Position p) const;
 	bool isEmpty(std::size_t x, std::size_t y) const;
-
-	Perimeter perimeter(std::size_t x, std::size_t y) const;
+	bool isEmpty(Position p) const;
+	bool isSameRow(std::size_t x1, std::size_t y1, std::size_t x2, std::size_t y2) const;
+	bool isSameRow(Position p1, Position p2) const;
+	bool isSameCol(std::size_t x1, std::size_t y1, std::size_t x2, std::size_t y2) const;
+	bool isSameCol(Position p1, Position p2) const;
+	bool isSameBox(std::size_t x1, std::size_t y1, std::size_t x2, std::size_t y2) const;
+	bool isSameBox(Position p1, Position p2) const;
 private:
 	Parameters _parameters;
 	Cell** _sudoku;
-
-	void _create(Cell*& array, std::size_t size);
-	void _create(Cell**& array, std::size_t size);
-	Cell** _copy(Cell** puzzle, std::size_t size);
-	void _delete(Cell**& puzzle, std::size_t size);
-
-
 };
+
 
 #endif // PUZZLE_H

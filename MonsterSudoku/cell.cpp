@@ -1,13 +1,13 @@
 #include "cell.h"
 
 Cell::Cell() {
-	_chosen = 0;
+	_value = 0;
 	_size = 0;
 }
 
 Cell::Cell(int size) {
 	_domain = Domain(size);
-	_chosen = size;
+	_value = size;
 	_size = size;
 }
 
@@ -23,14 +23,14 @@ void Cell::set(std::size_t value, bool val) {
 	if(value >= _size) {
 		return;
 	}
-	_domain.domain[value] = val;
+	_domain.values[value] = val;
 }
 
-void Cell::setChosen(std::size_t value) {
+void Cell::setValue(std::size_t value) {
 	if(value >= _size) {
 		return;
 	}
-	_chosen = value;
+	_value = value;
 	for(std::size_t i = 0; i < _size; ++i) {
 		set(i, false);
 	}
@@ -38,34 +38,34 @@ void Cell::setChosen(std::size_t value) {
 }
 
 void Cell::setEmpty() {
-	_chosen = _size;
+	_value = _size;
 }
 
 void Cell::reset() {
-	_chosen = _size;
-	for(utils::vb_it it = _domain.domain.begin(); it != _domain.domain.end(); ++it) {
+	_value = _size;
+	for(utils::vb_it it = _domain.values.begin(); it != _domain.values.end(); ++it) {
 		*it = true;
 	}
 }
 
 bool Cell::isComplete() const {
-	return _chosen < _size;
+	return _value < _size;
 }
 
-std::size_t Cell::getVal() const {
-	return _chosen;
+std::size_t Cell::getValue() const {
+	return _value;
 }
 
 std::ostream& operator << (std::ostream& out, const Cell& c) {
-	if(c._chosen == c._size) {
+	if(c._value == c._size) {
 		out << "-";
 	}
 	else {
-		if(c._chosen + 1 < 10) {
-			out << c._chosen + 1;
+		if(c._value + 1 < 10) {
+			out << c._value + 1;
 		}
 		else {
-			out << utils::convertIndexToChar (c._chosen);
+			out << utils::convertIndexToChar (c._value);
 		}
 	}
 	/* Print the domain as well */

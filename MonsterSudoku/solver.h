@@ -43,16 +43,18 @@ public:
 	Solver(Heuristics heuristics);
 	Solver(bool mrv, bool dh, bool lcv, bool acp, bool mac, bool fc, bool cpp, bool cp);
 
-	Heuristics& heuristics();
-	Log log();
+	Heuristics& getHeuristics();
+	Log getLog() const;
 
-	Puzzle solve(Puzzle puzzle, double timeout);
+	Puzzle solve(Puzzle puzzle, double timeout = 300);
 private:
 	Heuristics _heuristics;
 	Recorder _recorder;
 	Logger _logger;
 	std::chrono::time_point<std::chrono::system_clock> _start;
+	int** _degrees;
 
+	/* Outer algorithms */
 	/* Recursive backtracking search algorithm */
 	utils::Error search(Puzzle& puzzle, double timeout);
 	/* Algorithm to select next cell */
@@ -73,6 +75,13 @@ private:
 	bool isLegal(Puzzle puzzle, Position cell, std::size_t value);
 	/* Check Arc Consistency for a cell */
 	void propagateConstraints(Puzzle& puzzle, Position cell, bool record = false);
+
+	/* Heuristic methods */
+	Position selectByMRV(Puzzle puzzle);
+	std::vector<Position> orderByMRV(Puzzle puzzle);
+
+	/* Helper methods */
+	double getDuration(std::chrono::time_point<std::chrono::system_clock> start) const;
 };
 
 #endif // SOLVER_H
