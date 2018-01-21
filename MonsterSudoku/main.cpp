@@ -55,6 +55,7 @@ utils::Error getOptionals(Optionals& options, std::vector<std::string> inputs, i
 #define GEN_TEST TEST || 0
 #define REC_TEST TEST || 0
 #define SOLVE_TEST TEST || 0
+#define GEN_SOLV_TEST TEST || 0
 
 int main() {
 #if PUZZLE_TEST
@@ -134,6 +135,10 @@ int main() {
 	}
 	std::cout << s.getLog() << std::endl;
 
+#endif
+#if GEN_SOLV_TEST
+	Generator g;
+	std::cout << g.generateSolvable(17, 9, 3, 3) << std::endl;
 #endif
 	Generator gen;
 	primary(gen);

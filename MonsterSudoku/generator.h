@@ -21,15 +21,17 @@
 class Generator {
 public:
 	Generator();
-	Generator(int timeout);
+	Generator(int timeout, int gen = 20);
 
 	bool checkFile(std::string path);
 	Puzzle generate(std::string path);
 	Puzzle generate(int m, int n, int p, int q);
+	Puzzle generateSolvable(int m, int n, int p, int q);
 	void saveToFile(const Puzzle& puzzle, std::string path);
 
 private:
 	int _timeout;
+	int _gen;
 	bool _areParamsLegal(int m, int n, int p, int q) const;
 };
 
