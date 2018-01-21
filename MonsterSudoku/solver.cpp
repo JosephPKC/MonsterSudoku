@@ -269,7 +269,11 @@ void Solver::preSearch(Puzzle& puzzle) {
 
 bool Solver::preAssign(Puzzle& puzzle, const Position& toAssignCell, std::size_t val) {
 	// Check if move is legal
-	return isLegal(puzzle, toAssignCell, val);
+	bool res = isLegal(puzzle, toAssignCell, val);
+	if(_heuristics.hasFC) {
+		res = res && forwardCheck(puzzle, toAssignCell, val);
+	}
+	return res;
 }
 
 void Solver::postAssign(Puzzle& puzzle, const Position& assignedCell) {
@@ -357,7 +361,7 @@ Position Solver::selectByMRV(const Puzzle& puzzle) {
 			}
 		}
 	}
-	_logger.log().mrvTime = getDuration(start);
+	_logger.log().mrvTime += getDuration(start);
 	if(min == puzzle.getSize() + 1) {
 		/* There were no empty cells */
 		throw utils::Error::No_Empty_Cells;
@@ -367,6 +371,7 @@ Position Solver::selectByMRV(const Puzzle& puzzle) {
 
 std::vector<Position> Solver::orderByMRV(const Puzzle& puzzle) {
 	auto start = std::chrono::system_clock::now();
+
 	/* Find the smallest domain size */
 	std::size_t min = puzzle.getSize() + 1;
 	for(std::size_t x = 0; x < puzzle.getSize(); ++x) {
@@ -378,7 +383,7 @@ std::vector<Position> Solver::orderByMRV(const Puzzle& puzzle) {
 	}
 
 	if(min == puzzle.getSize() + 1) {
-		_logger.log().mrvTime = getDuration(start);
+		_logger.log().mrvTime += getDuration(start);
 		throw utils::Error::No_Empty_Cells;
 	}
 	std::vector<Position> smallests;
@@ -389,7 +394,7 @@ std::vector<Position> Solver::orderByMRV(const Puzzle& puzzle) {
 			}
 		}
 	}
-	_logger.log().mrvTime = getDuration(start);
+	_logger.log().mrvTime += getDuration(start);
 	return smallests;
 }
 
@@ -486,12 +491,29 @@ std::vector<std::size_t> Solver::orderByLCV(const Puzzle& puzzle, const Position
 	};
 	std::sort(values.begin(), values.end(), pairCompare());
 
-	_logger.log().lcvTime += getDuration(start);
 	std::vector<std::size_t> lcvValues;
 	for(auto& i : values) {
 		lcvValues.push_back(i.first);
 	}
+
+	_logger.log().lcvTime += getDuration(start);
+
 	return lcvValues;
+}
+
+bool Solver::forwardCheck(const Puzzle& puzzle, const Position& cell, std::size_t tentative) {
+	auto start = std::chrono::system_clock::now();
+
+	std::vector<Position> neighbors = puzzle.getNeighbors(cell, true);
+	/* For every neighbor, check if the tentative value is consistent amongst them */
+	for(auto& n : neighbors) {
+		if(!isConsistent(puzzle, n, tentative)) {
+			_logger.log().fcTime += getDuration(start);
+			return false;
+		}
+	}
+	_logger.log().fcTime += getDuration(start);
+	return true;
 }
 
 bool Solver::isLegal(const Puzzle& puzzle, const Position& cell, std::size_t value) {
@@ -518,6 +540,43 @@ bool Solver::isLegal(const Puzzle& puzzle, const Position& cell, std::size_t val
 		}
 	}
 	return true;
+}
+
+bool Solver::isConsistent(const Puzzle& puzzle, const Position& cell1, const Position& cell2) {
+	std::vector<bool> values1 = puzzle.getDomain(cell1).values;
+	std::vector<bool> values2 = puzzle.getDomain(cell2).values;
+	/* For every value in the domain */
+	for(std::size_t i = 0; i < puzzle.getSize(); ++i) {
+		if(values1[i]) {
+			bool consistent = isConsistent(values2, i);
+			if(!consistent) {
+				/* If no value is consistent, then these two cells are not consistent */
+				return false;
+			}
+		}
+		/* Do the inverse */
+		if(values2[i]) {
+			bool consistent = isConsistent(values1, i);
+			if(!consistent) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+bool Solver::isConsistent(const Puzzle& puzzle, const Position& cell, std::size_t val) {
+	std::vector<bool> values = puzzle.getDomain(cell).values;
+	return isConsistent(values, val);
+}
+
+bool Solver::isConsistent(const std::vector<bool>& values, std::size_t val) {
+	for(std::size_t i = 0; i < values.size(); ++i) {
+		if(values[i] && i != val) {
+			return true;
+		}
+	}
+	return false;
 }
 
 double Solver::getDuration(const std::chrono::time_point<std::chrono::system_clock>& start) const {

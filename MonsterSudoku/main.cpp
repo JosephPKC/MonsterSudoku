@@ -9,8 +9,6 @@
 
 /* TODO:
  * More refactoring of Solver + Main
- * Implement Guaranteed Solution Generator
- * Implement LCV for value choosing
  * Implement AC checks for pp and m
  * Implement Fc
  * Implement DLX (Dancing Lights X) by converting Sudoku to a Doubly Linked List Sparse Matrix and into an Exact Cover Problem and performing Algorithm X on it.
@@ -18,6 +16,31 @@
 
 /* DLX Stuff
  * http://buzzard.ups.edu/talks/beezer-2010-AIMS-sudoku.pdf
+ */
+
+/* Sudoku to Exact Cover Sparse Matrix */
+/* n^3 rows, each representing a unique pair of value and position
+ * 4n^2 columns.
+ * Each row must have exactly 4 1s.
+ * The first set of columns: Each cell can only contain one value.
+ *		The pattern is as follows: Every n rows have 1s in the same column, starting at the first column.
+ *		After n rows, move up the column to the next one, and begin again with the next n rows.
+ *		Repeat
+ *		You should see cascading n 1s that move right every n 1s. with all columns having exactly n 1s in a column.
+ * The second set: Values in each row must be distinct.
+ *		Create a diagonal line of 1s, beginning at the left corner and moving right.
+ *		Each line should be of n length.
+ *		After n of these lines, move right n spaces, and begin again.
+ * Third set: Values in each column must be distinct.
+ *		Create a large diagonal line of 1s like above.
+ *		The line should be of n^2 length.
+ *		Repeat.
+ *		This is the same as above, except after every n length line, you move right n spaces. If you hit the end, go back all the way left and start again.
+ * Fourth set: Values in each block must be distinct
+ *		Create a diagonal line of n 1s, just like above.
+ *		Repeat q times, then move right n spaces.
+ *		Do the above p times.
+ *		By now, it should hit the end, so go back all the way to the left and repeat.
  */
 
 /* A Generator that guarantees solvable puzzles:
@@ -384,6 +407,9 @@ utils::Error getOptionals(Optionals& options, std::vector<std::string> inputs, i
 		}
 		else if(it->compare(utils::FC_ARG) == 0) {
 			options.heuristics.hasFC = true;
+		}
+		else if(it->compare(utils::ALL_ARG) == 0) {
+			options.heuristics.toggleAll(true);
 		}
 	}
 	return utils::Error::Success;

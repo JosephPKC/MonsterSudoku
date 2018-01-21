@@ -31,6 +31,10 @@ struct Heuristics {
 		hasCP = false;
 	}
 
+	void toggleAll(bool val) {
+		hasMRV = hasMD = hasLCV = hasACP = hasMAC = hasFC = hasCPP = hasCP = val;
+	}
+
 	friend std::ostream& operator << (std::ostream& out, const Heuristics& h) {
 		out << h.hasMRV << h.hasMD << h.hasLCV << h.hasACP << h.hasMAC << h.hasFC << h.hasCPP << h.hasCP;
 		return out;
@@ -77,9 +81,14 @@ private:
 	Position selectByMD(const std::vector<Position>& subset);
 	void updateDegrees(const Puzzle& puzzle, const Position& cell, int change);
 	std::vector<std::size_t> orderByLCV(const Puzzle& puzzle, const Position& cell);
+	bool forwardCheck(const Puzzle& puzzle, const Position& cell, std::size_t tentative);
+
 
 	/* Helper methods */
 	bool isLegal(const Puzzle& puzzle, const Position& cell, std::size_t value);
+	bool isConsistent(const Puzzle& puzzle, const Position& cell1, const Position& cell2);
+	bool isConsistent(const Puzzle& puzzle, const Position& cell, std::size_t val);
+	bool isConsistent(const std::vector<bool>& values, std::size_t val);
 	double getDuration(const std::chrono::time_point<std::chrono::system_clock>& start) const;
 };
 
