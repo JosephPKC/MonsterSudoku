@@ -10,7 +10,6 @@
 /* TODO:
  * More refactoring of Solver + Main
  * Implement Guaranteed Solution Generator
- * Implement Max Degrees to aid MRV in selecting the best cell
  * Implement LCV for value choosing
  * Implement AC checks for pp and m
  * Implement Fc
@@ -245,7 +244,7 @@ utils::Error doCommand(Generator gen, std::vector<std::string> inputs) {
 		/* Solve puzzle */
 		Solver s(options.heuristics);
 		try {
-			Puzzle ps = s.solve(pz);
+			Puzzle ps = s.solve(pz, 500);
 
 			/* Display solution & reports */
 			std::cout << ps << std::endl;

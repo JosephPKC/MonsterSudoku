@@ -158,7 +158,7 @@ std::vector<Position> Puzzle::getNeighbors(std::size_t x, std::size_t y, bool on
 	for(std::size_t i = perim.t; i <= perim.b; ++i) {
 		for(std::size_t j = perim.l; j <= perim.r; ++j) {
 			/* Ignore the chosen cell, and ignore cells that were already in the same row and column */
-			if(i != x && j != y && !isSameRow(Position(i, j), Position(x, y)) && !isSameCol(Position(i, j), Position(x, y))) {
+			if(i != x && j != y && !isSameRow(i, j, x, y) && !isSameCol(i, j, x, y)) {
 				if(onlyEmpty) {
 					if(isEmpty(i, j)) {
 						neighbors.push_back(Position(i, j));
@@ -243,7 +243,7 @@ void Puzzle::set(std::size_t x, std::size_t y, std::size_t val) {
 	if(x >= getSize() || y >= getSize()) {
 		return;
 	}
-	_sudoku[x][y].setValue (val);
+	_sudoku[x][y].setValue(val);
 }
 
 void Puzzle::set(const Position& p, std::size_t val) {

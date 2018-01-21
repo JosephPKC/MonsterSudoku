@@ -2,6 +2,7 @@
 #define SOLVER_H
 #include <chrono>
 #include <ctime>
+#include <algorithm>
 #include "puzzle.h"
 #include "recorder.h"
 #include "logger.h"
@@ -55,32 +56,30 @@ private:
 	int** _degrees;
 
 	/* Outer algorithms */
-	/* Recursive backtracking search algorithm */
 	utils::Error search(Puzzle& puzzle, double timeout);
-	/* Algorithm to select next cell */
 	Position selectNextCell(const Puzzle& puzzle);
-	/* Algorithm to order values for cell */
 	std::vector<std::size_t> orderValues(const Puzzle& puzzle, const Position& cell);
-	/* Algorithm to backtrack */
 	void backtrack(Puzzle& puzzle);
-	/* Algorithm for any pre-processing */
 	void preSearch(Puzzle& puzzle);
-	/* Algorithm for any pre-assigment processing */
 	bool preAssign(Puzzle& puzzle, const Position& toAssignCell, std::size_t val);
-	/* Algorithm for any post-assignment processing */
 	void postAssign(Puzzle& puzzle, const Position& assignedCell);
-	/* Assign a value to cell */
 	void assignValue(Puzzle& puzzle, const Position& cell, std::size_t value);
-	/* Check if a value is legal */
-	bool isLegal(const Puzzle& puzzle, const Position& cell, std::size_t value);
-	/* Check Arc Consistency for a cell */
-	void propagateConstraints(Puzzle& puzzle, const Position& cell, bool record = false);
+
+
 
 	/* Heuristic methods */
+	void propagateConstraintsInitial(Puzzle& puzzle);
+	void propagateConstraints(Puzzle& puzzle, const Position& cell, bool record = false);
 	Position selectByMRV(const Puzzle& puzzle);
 	std::vector<Position> orderByMRV(const Puzzle& puzzle);
+	void initializeDegrees(const Puzzle& puzzle);
+	Position selectByMD(const Puzzle& puzzle);
+	Position selectByMD(const std::vector<Position>& subset);
+	void updateDegrees(const Puzzle& puzzle, const Position& cell, int change);
+	std::vector<std::size_t> orderByLCV(const Puzzle& puzzle, const Position& cell);
 
 	/* Helper methods */
+	bool isLegal(const Puzzle& puzzle, const Position& cell, std::size_t value);
 	double getDuration(const std::chrono::time_point<std::chrono::system_clock>& start) const;
 };
 

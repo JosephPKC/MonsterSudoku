@@ -58,9 +58,7 @@ Puzzle Solver::solve(const Puzzle& puzzle, double timeout) {
 	/* Success: Solvable and Solved */
 	_logger.log().solvable = true;
 	_logger.log().solved = true;
-	std::cout << "Grabbing total time" << std::endl;
 	_logger.log().totalTime = getDuration(_start);
-	std::cout << "Got total time" << std::endl;
 
 	/* Clean up  */
 	_recorder = Recorder();
@@ -94,7 +92,11 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 	}
 
 #if DEBUG
-	std::cout << "Chosen: " << chosen << " -Domain: " << puzzle.getDomainSize(chosen.x, chosen.y) << std::endl;
+	std::cout << "Chosen: " << chosen << " -Domain: " << puzzle.getDomainSize(chosen.x, chosen.y);
+	if(_heuristics.hasMD) {
+		std::cout << " -Degrees: " << _degrees[chosen.x][chosen.y];
+	}
+	std::cout << std::endl;
 #endif
 
 	/* Get domain order for the cell */
@@ -177,7 +179,7 @@ Position Solver::selectNextCell(const Puzzle& puzzle) {
 	/* MRV */
 	if(_heuristics.hasMRV) {
 		if(_heuristics.hasMD) {
-
+			return selectByMD(orderByMRV(puzzle));
 		}
 		else {
 			try {
@@ -189,7 +191,12 @@ Position Solver::selectNextCell(const Puzzle& puzzle) {
 		}
 	}
 	else if(_heuristics.hasMD) {
-
+		try {
+			return selectByMD(puzzle);
+		}
+		catch(utils::Error e) {
+			throw e;
+		}
 	}
 	else {
 		/* Get the next empty cell */
@@ -205,14 +212,19 @@ Position Solver::selectNextCell(const Puzzle& puzzle) {
 }
 
 std::vector<std::size_t> Solver::orderValues(const Puzzle& puzzle, const Position& cell) {
-	std::vector<std::size_t> values;
-	Domain domain = puzzle.getDomain(cell.x, cell.y);
-	for(std::size_t i = 0; i < puzzle.getSize(); ++i) {
-		if(domain.values[i]) {
-			values.push_back(i);
-		}
+	if(_heuristics.hasLCV) {
+		return orderByLCV(puzzle, cell);
 	}
-	return values;
+	else {
+		std::vector<std::size_t> values;
+		Domain domain = puzzle.getDomain(cell.x, cell.y);
+		for(std::size_t i = 0; i < puzzle.getSize(); ++i) {
+			if(domain.values[i]) {
+				values.push_back(i);
+			}
+		}
+		return values;
+	}
 }
 
 void Solver::backtrack(Puzzle& puzzle) {
@@ -226,6 +238,9 @@ void Solver::backtrack(Puzzle& puzzle) {
 
 	/* Unassign the cell that was assigned, and restore its domain */
 	puzzle.restore(r.position, r.previousDomain);
+	if(_heuristics.hasMD) {
+		_degrees[r.position.x][r.position.y] = r.previousDegrees;
+	}
 
 	/* Restore the domains for each propagation */
 	for(std::vector<Subrecord>::iterator it = r.propagations.begin(); it != r.propagations.end(); ++it) {
@@ -233,54 +248,21 @@ void Solver::backtrack(Puzzle& puzzle) {
 		puzzle.access(p.x, p.y).set(it->elimination, true);
 	}
 	_logger.log().btTime += getDuration(start);
+
+	/* Restore neighbor degrees */
+	updateDegrees(puzzle, r.position, 1);
 }
 
 void Solver::preSearch(Puzzle& puzzle) {
 	// Create a network of Degrees
-//	_degrees = new int*[puzzle.size()];
-//	for(std::size_t x = 0; x < puzzle.size(); ++x) {
-//		_degrees[x] = new int[puzzle.size()];
-//		for(std::size_t y = 0; y < puzzle.size(); ++y) {
-//			if(puzzle.isEmpty(x, y)) {
-//				/* Get the number of empty neighbors */
-//				int degrees = 0;
-//				for(std::size_t i = 0; i < puzzle.size(); ++i) {
-//					if(i != y && puzzle.isEmpty(x, i)) {
-//						++degrees;
-//					}
-//					if(i != x && puzzle.isEmpty(i, y)) {
-//						++degrees;
-//					}
-//				}
-//				Perimeter p = puzzle.perimeter(x, y);
-//				for(std::size_t i = p.t; i <= p.b; ++i) {
-//					for(std::size_t j = p.l; j <= p.r; ++j) {
-//						if(i != x && j != y && puzzle.isEmpty(i, j)) {
-//							++degrees;
-//						}
-//					}
-//				}
-//				_degrees[x][y] = degrees;
-////				std::cout << "Degrees for " << x << ", " << y << ": " << degrees << std::endl;
-//			}
-//			else {
-//				_degrees[x][y] = 0;
-//			}
-//		}
-//	}
-
+	if(_heuristics.hasMD) {
+		initializeDegrees(puzzle);
+	}
 	// Constraint Propagation Precursor
 	// Perform constraint propagation on the initial set of solved cells.
 	if(_heuristics.hasCPP) {
 		auto start = std::chrono::system_clock::now();
-
-		for(std::size_t x = 0; x < puzzle.getSize(); ++x) {
-			for(std::size_t y = 0; y < puzzle.getSize(); ++y) {
-				if(!puzzle.isEmpty(x, y)) {
-					propagateConstraints(puzzle, Position(x, y));
-				}
-			}
-		}
+		propagateConstraintsInitial(puzzle);
 		_logger.log().cppTime += getDuration(start);
 	}
 }
@@ -292,6 +274,10 @@ bool Solver::preAssign(Puzzle& puzzle, const Position& toAssignCell, std::size_t
 
 void Solver::postAssign(Puzzle& puzzle, const Position& assignedCell) {
 	// Nothing for now.
+
+	// Update degrees
+	updateDegrees(puzzle, assignedCell, -1);
+
 	// Will contain arc consistency propagation.
 	// i.e. From the chosen cell, maintain arc consistency with neighbors, and their neighbors, etc...
 
@@ -307,44 +293,23 @@ void Solver::postAssign(Puzzle& puzzle, const Position& assignedCell) {
 }
 
 void Solver::assignValue(Puzzle& puzzle, const Position& cell, std::size_t value) {
-	Domain previous = puzzle.access(cell.x, cell.y).getDomain();
-	puzzle.set(cell.x, cell.y, value);
-	_recorder.add(cell, value, previous);
-
-	/* Manage the neighbor's degrees */
-//	std::vector<Position> neighbors = puzzle.neighbors(cell.x, cell.y, true);
-//	for(std::vector<Position>::iterator it = neighbors.begin(); it != neighbors.end(); ++it) {
-//		--_degrees[it->x][it->y];
-//		if(_degrees[it->x][it->y] < 0) {
-////			std::cerr << "Degrees is less than 0. Should not happen. @ " << it->x << ", " << it->y << std::endl;
-//		}
-//	}
+	Domain previous = puzzle.access(cell).getDomain();
+	puzzle.set(cell, value);
+	int degrees = _heuristics.hasMD ? _degrees[cell.x][cell.y] : -1;
+	_recorder.add(cell, value, degrees, previous);
+	if(_heuristics.hasMD) {
+		_degrees[cell.x][cell.y] = -1;
+	}
 }
 
-bool Solver::isLegal(const Puzzle& puzzle, const Position& cell, std::size_t value) {
-	if(value == puzzle.getSize()) {
-		return true;
-	}
-	std::size_t x = cell.x, y = cell.y;
-	/* Check if there is a cell with the same value in the row & column of the cell */
-	for(std::size_t i = 0; i < puzzle.getSize(); ++i) {
-		if(i != y && !puzzle.isEmpty(x, i) && puzzle.access(x, i).getValue() == value) {
-			return false;
-		}
-		if(i != x && !puzzle.isEmpty(i, y) && puzzle.access(i, y).getValue() == value) {
-			return false;
-		}
-	}
-
-	Block p = puzzle.getBlock(cell.x, cell.y);
-	for(std::size_t i = p.t; i <= p.b; ++i) {
-		for(std::size_t j = p.l; j <= p.r; ++j) {
-			if(i != x && j != y && !puzzle.isEmpty(i, j) && puzzle.access(i, j).getValue() == value) {
-				return false;
+void Solver::propagateConstraintsInitial(Puzzle& puzzle) {
+	for(std::size_t x = 0; x < puzzle.getSize(); ++x) {
+		for(std::size_t y = 0; y < puzzle.getSize(); ++y) {
+			if(!puzzle.isEmpty(x, y)) {
+				propagateConstraints(puzzle, Position(x, y));
 			}
 		}
 	}
-	return true;
 }
 
 void Solver::propagateConstraints(Puzzle& puzzle, const Position& cell, bool record) {
@@ -401,44 +366,158 @@ Position Solver::selectByMRV(const Puzzle& puzzle) {
 }
 
 std::vector<Position> Solver::orderByMRV(const Puzzle& puzzle) {
-//	auto start = std::chrono::system_clock::now();
+	auto start = std::chrono::system_clock::now();
+	/* Find the smallest domain size */
+	std::size_t min = puzzle.getSize() + 1;
+	for(std::size_t x = 0; x < puzzle.getSize(); ++x) {
+		for(std::size_t y = 0; y < puzzle.getSize(); ++y) {
+			if(puzzle.isEmpty(x, y) && puzzle.getDomainSize(x, y) < min) {
+				min = puzzle.getDomainSize(x, y);
+			}
+		}
+	}
 
-//	/* Find the smallest domain size */
-//	std::size_t min = puzzle.size() + 1;
-//	Position smallest = Position(puzzle.size(), puzzle.size());
-//	for(std::size_t x = 0; x < puzzle.size(); ++x) {
-//		for(std::size_t y = 0; y < puzzle.size(); ++y) {
-//			if(puzzle.isEmpty(x, y) && puzzle.domainSize(x, y) < min) {
-//				min = puzzle.domainSize(x, y);
-//				smallest = Position(x, y);
-//			}
-//		}
-//	}
+	if(min == puzzle.getSize() + 1) {
+		_logger.log().mrvTime = getDuration(start);
+		throw utils::Error::No_Empty_Cells;
+	}
+	std::vector<Position> smallests;
+	for(std::size_t x = 0; x < puzzle.getSize(); ++x) {
+		for(std::size_t y = 0; y < puzzle.getSize(); ++y) {
+			if(puzzle.isEmpty(x, y) && puzzle.getDomainSize(x, y) == min) {
+				smallests.push_back(Position(x, y));
+			}
+		}
+	}
+	_logger.log().mrvTime = getDuration(start);
+	return smallests;
+}
 
-//	if(min == puzzle.size() + 1) {
-//		/* There were no empty cells */
-//		auto end = std::chrono::system_clock::now();
-//		std::chrono::duration<double> duration = end - start;
-//		_logger.log().mrvTime += duration.count();
-//		throw utils::Error::No_Empty_Cells;
-//	}
-//	std::vector<Position> smallests;
+void Solver::initializeDegrees(const Puzzle& puzzle) {
+	_degrees = utils::create<int>(puzzle.getSize(), puzzle.getSize());
+	for(std::size_t x = 0; x < puzzle.getSize(); ++x) {
+		for(std::size_t y = 0; y < puzzle.getSize(); ++y) {
+			if(puzzle.isEmpty(x, y)) {
+				std::vector<Position> neighbors = puzzle.getNeighbors(x, y, true);
+				_degrees[x][y] = neighbors.size();
+			}
+			else {
+				_degrees[x][y] = -1;
+			}
+		}
+	}
+}
 
-//	/* If MD heuristic is enabled, we should find all of the cells with the same smallest domain */
-//	if(_heuristics.hasMD) {
+Position Solver::selectByMD(const Puzzle& puzzle) {
+	/* Find the maximum degree and the first position that has that degree */
+	auto start = std::chrono::system_clock::now();
+	int max = -1;
+	Position maxPos;
+	for(std::size_t x = 0; x < puzzle.getSize(); ++x) {
+		for(std::size_t y = 0; y < puzzle.getSize(); ++y) {
+			if(_degrees[x][y] > max) {
+				max = _degrees[x][y];
+				maxPos = Position(x, y);
+			}
+		}
+	}
+	_logger.log().mdTime += getDuration(start);
+	if(max == -1) {
+		throw utils::Error::No_Empty_Cells;
+	}
+	return maxPos;
+}
 
-//	}
-//	/* Else, just find the first smallest domain */
-//	else {
-//		auto end = std::chrono::system_clock::now();
-//		std::chrono::duration<double> duration = end - start;
-//		_logger.log().mrvTime += duration.count();
-//		smallests.push_back(smallest);
-//		return smallests;
-//	}
-//	/* Get an empty cell with the smallest domain */
+Position Solver::selectByMD(const std::vector<Position>& subset) {
+	auto start = std::chrono::system_clock::now();
+	int max = -1;
+	Position maxPos;
+	for(auto i : subset) {
+		if(_degrees[i.x][i.y] > max) {
+			max = _degrees[i.x][i.y];
+			maxPos = i;
+		}
+	}
+	_logger.log().mdTime += getDuration(start);
+	if(max == -1) {
+		throw utils::Error::No_Empty_Cells;
+	}
+	return maxPos;
+}
 
+void Solver::updateDegrees(const Puzzle& puzzle, const Position& cell, int change) {
+	if(!_heuristics.hasMD) {
+		return;
+	}
+	auto start = std::chrono::system_clock::now();
+	std::vector<Position> neighbors = puzzle.getNeighbors(cell, true);
+	for(std::vector<Position>::iterator it = neighbors.begin(); it != neighbors.end(); ++it) {
+		_degrees[it->x][it->y] += change;
+	}
+	_logger.log().mduTime += getDuration(start);
+}
 
+std::vector<std::size_t> Solver::orderByLCV(const Puzzle& puzzle, const Position& cell) {
+	auto start = std::chrono::system_clock::now();
+	/* Get a list of domain values */
+	std::vector<std::pair<std::size_t, int>> values;
+	Domain d = puzzle.getDomain(cell);
+	for(std::size_t i = 0; i < d.values.size(); ++i) {
+		if(d.values[i]) {
+			values.push_back(std::make_pair(i, 0));
+		}
+	}
+
+	/* For each value, check the neighbors domains to see if this value exists */
+	std::vector<Position> neighbors = puzzle.getNeighbors(cell, true);
+	for(std::size_t i = 0; i < values.size(); ++i) {
+		for(auto& n : neighbors) {
+			if(puzzle.getDomain(n).values[values[i].first]) {
+				++values[i].second;
+			}
+		}
+	}
+
+	/* Sort the values vector from least to greatest based on their constraints */
+	struct pairCompare {
+		bool operator()(std::pair<std::size_t, int> l, std::pair<std::size_t, int> r) {
+			return l.second < r.second;
+		}
+	};
+	std::sort(values.begin(), values.end(), pairCompare());
+
+	_logger.log().lcvTime += getDuration(start);
+	std::vector<std::size_t> lcvValues;
+	for(auto& i : values) {
+		lcvValues.push_back(i.first);
+	}
+	return lcvValues;
+}
+
+bool Solver::isLegal(const Puzzle& puzzle, const Position& cell, std::size_t value) {
+	if(value == puzzle.getSize()) {
+		return true;
+	}
+	std::size_t x = cell.x, y = cell.y;
+	/* Check if there is a cell with the same value in the row & column of the cell */
+	for(std::size_t i = 0; i < puzzle.getSize(); ++i) {
+		if(i != y && !puzzle.isEmpty(x, i) && puzzle.access(x, i).getValue() == value) {
+			return false;
+		}
+		if(i != x && !puzzle.isEmpty(i, y) && puzzle.access(i, y).getValue() == value) {
+			return false;
+		}
+	}
+
+	Block p = puzzle.getBlock(cell.x, cell.y);
+	for(std::size_t i = p.t; i <= p.b; ++i) {
+		for(std::size_t j = p.l; j <= p.r; ++j) {
+			if(i != x && j != y && !puzzle.isEmpty(i, j) && puzzle.access(i, j).getValue() == value) {
+				return false;
+			}
+		}
+	}
+	return true;
 }
 
 double Solver::getDuration(const std::chrono::time_point<std::chrono::system_clock>& start) const {

@@ -4,8 +4,8 @@ Recorder::Recorder() {
 	// Nothing
 }
 
-void Recorder::add(const Position& position, std::size_t value, const Domain& domain) {
-	Record r(position, value, domain);
+void Recorder::add(const Position& position, std::size_t value, int degrees, const Domain& domain) {
+	Record r(position, value, domain, degrees);
 	_records.push_back(r);
 }
 
