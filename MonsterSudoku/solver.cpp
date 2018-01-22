@@ -8,15 +8,13 @@ Solver::Solver(const Heuristics& heuristics) {
 	_heuristics = heuristics;
 }
 
-Solver::Solver(bool mrv, bool dh, bool lcv, bool acp, bool mac, bool fc, bool cpp, bool cp) {
+Solver::Solver(bool mrv, bool dh, bool lcv, bool acp, bool mac, bool fc) {
 	_heuristics.hasMRV = mrv;
 	_heuristics.hasMD = dh;
 	_heuristics.hasLCV = lcv;
 	_heuristics.hasACP = acp;
 	_heuristics.hasMAC = mac;
 	_heuristics.hasFC = fc;
-	_heuristics.hasCPP = cpp;
-	_heuristics.hasCP = cp;
 }
 
 Heuristics& Solver::getHeuristics() {
@@ -34,16 +32,13 @@ Puzzle Solver::solve(const Puzzle& puzzle, double timeout) {
 
 	Puzzle puzzleC = puzzle;
 	/* Pre-process */
-	try {
-		preSearch(puzzleC);
-		_logger.log().preTime = getDuration(_start);
-	}
-	catch(utils::Error e) {
+	if(!preSearch(puzzleC)) {
 		_logger.log().preTime = getDuration(_start);
 		_logger.log().solved = true;
 		_logger.log().totalTime = getDuration(_start);
-		throw e;
+		throw utils::Error::No_More_Values;
 	}
+	_logger.log().preTime = getDuration(_start);
 
 	/* Search */
 	utils::Error res = search(puzzleC, timeout);
@@ -134,40 +129,40 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 #endif
 
 			/* Do post assignment processing */
-			try {
-				postAssign(puzzle, chosen);
-			}
-			catch(utils::Error e) {
-				return e;
-			}
-
-			/* Recur, or try a new value now */
-			auto res = search(puzzle, timeout);
-			if(res == utils::Error::Success) {
-				return res;
-			}
-			else if(res != utils::Error::Timeout) {
-
-#if DEBUG
-				std::cout << "Backtracking: " << chosen << " & " << *values.begin() << std::endl;
-#endif
-
+			if(!postAssign(puzzle, chosen)) {
 				_logger.log().deadEnds += 1;
 				backtrack(puzzle);
-
-#if DEBUG
-				std::cout << "Backtracked puzzle:\n" << puzzle << std::endl;
-#endif
-
 				values.erase(values.begin());
 			}
 			else {
+				/* Recur, or try a new value now */
+				auto res = search(puzzle, timeout);
+				if(res == utils::Error::Success) {
+					return res;
+				}
+				else if(res != utils::Error::Timeout) {
 
-#if DEBUG
-				std::cout << "Timeout" << std::endl;
-#endif
+    #if DEBUG
+					std::cout << "Backtracking: " << chosen << " & " << *values.begin() << std::endl;
+    #endif
 
-				return res;
+					_logger.log().deadEnds += 1;
+					backtrack(puzzle);
+
+    #if DEBUG
+					std::cout << "Backtracked puzzle:\n" << puzzle << std::endl;
+    #endif
+
+					values.erase(values.begin());
+				}
+				else {
+
+    #if DEBUG
+					std::cout << "Timeout" << std::endl;
+    #endif
+
+					return res;
+				}
 			}
 		}
 		else {
@@ -266,63 +261,48 @@ void Solver::backtrack(Puzzle& puzzle) {
 	updateDegrees(puzzle, r.position, 1);
 }
 
-void Solver::preSearch(Puzzle& puzzle) {
+bool Solver::preSearch(Puzzle& puzzle) {
+	// Constraint Propagation Precursor
+	// Perform constraint propagation on the initial set of solved cells.
+	auto start = std::chrono::system_clock::now();
+	propagateConstraintsInitial(puzzle);
+	_logger.log().cppTime += getDuration(start);
+
 	// Create a network of Degrees
 	if(_heuristics.hasMD) {
 		initializeDegrees(puzzle);
 	}
-	// Constraint Propagation Precursor
-	// Perform constraint propagation on the initial set of solved cells.
-	if(_heuristics.hasCPP) {
-		auto start = std::chrono::system_clock::now();
-		propagateConstraintsInitial(puzzle);
-		_logger.log().cppTime += getDuration(start);
-	}
 	if(_heuristics.hasACP) {
 		auto start = std::chrono::system_clock::now();
-		try {
-			maintainArcConsistency(puzzle, true);
-			_logger.log().acpTime += getDuration(start);
-		}
-		catch(utils::Error e) {
-			_logger.log().acpTime += getDuration(start);
-			throw e;
-		}
+		bool res = initialArcConsistency(puzzle);
+		_logger.log().acpTime += getDuration(start);
+		return res;
 	}
+	return true;
 }
 
 bool Solver::preAssign(Puzzle& puzzle, const Position& toAssignCell, std::size_t val) {
 	// Check if move is legal
-	bool res = isLegal(puzzle, toAssignCell, val);
-	if(_heuristics.hasFC) {
-		res = res && forwardCheck(puzzle, toAssignCell, val);
-	}
-	return res;
+	return isLegal(puzzle, toAssignCell, val);;
 }
 
-void Solver::postAssign(Puzzle& puzzle, const Position& assignedCell) {
+bool Solver::postAssign(Puzzle& puzzle, const Position& assignedCell) {
+	// Constraint Propagation
+	auto start = std::chrono::system_clock::now();
+	propagateConstraints(puzzle, assignedCell, true);
+	_logger.log().cpTime += getDuration(start);
+
 	// Update degrees
 	updateDegrees(puzzle, assignedCell, -1);
-
-	// Constraint Propagation
-	if(_heuristics.hasCP) {
-		auto start = std::chrono::system_clock::now();
-		propagateConstraints(puzzle, assignedCell, true);
-		_logger.log().cpTime += getDuration(start);
-	}
 
 	// Will contain arc consistency propagation.
 	if(_heuristics.hasMAC) {
 		auto start = std::chrono::system_clock::now();
-		try {
-			maintainArcConsistency(puzzle);
-			_logger.log().macTime += getDuration(start);
-		}
-		catch(utils::Error e) {
-			_logger.log().macTime += getDuration(start);
-			throw e;
-		}
+		bool res = maintainArcConsistency(puzzle, assignedCell);
+		_logger.log().macTime += getDuration(start);
+		return res;
 	}
+	return true;
 }
 
 void Solver::assignValue(Puzzle& puzzle, const Position& cell, std::size_t value) {
@@ -530,23 +510,30 @@ std::vector<std::size_t> Solver::orderByLCV(const Puzzle& puzzle, const Position
 	return lcvValues;
 }
 
-bool Solver::forwardCheck(const Puzzle& puzzle, const Position& cell, std::size_t tentative) {
+bool Solver::forwardCheck(Puzzle& puzzle, const Position& cell) {
+	/* Forward Check only ensures consistency with direct neighbors. It does not propagate */
 	auto start = std::chrono::system_clock::now();
 
 	std::vector<Position> neighbors = puzzle.getNeighbors(cell, true);
-	/* For every neighbor, check if the tentative value is consistent amongst them */
+	/* For every neighbor, check if neighbor to cell arc is consistent */
 	for(auto& n : neighbors) {
-		if(!isConsistent(puzzle, n, tentative)) {
-			_logger.log().fcTime += getDuration(start);
-			return false;
+		/* See if it is consistent. If not, reduce the arc to make it consistent */
+		if(reduceArc(puzzle, n, cell)) {
+			if(puzzle.getDomainSize(n) == 0) {
+				_logger.log().fcTime += getDuration(start);
+				return false;
+			}
 		}
 	}
 	_logger.log().fcTime += getDuration(start);
 	return true;
+
 }
 
-void Solver::maintainArcConsistency(Puzzle& puzzle, bool initial) {
-	/* Create a list of arcs: pairs of empty cells to neighbors */
+bool Solver::initialArcConsistency(Puzzle& puzzle) {
+	/* Check all arcs for consistency. Propagate them if needed */
+	auto start = std::chrono::system_clock::now();
+	/* Create arcs list */
 	std::vector<std::pair<Position, Position>> arcs;
 	for(std::size_t x = 0; x < puzzle.getSize(); ++x) {
 		for(std::size_t y = 0; y < puzzle.getSize(); ++y) {
@@ -558,51 +545,64 @@ void Solver::maintainArcConsistency(Puzzle& puzzle, bool initial) {
 			}
 		}
 	}
-//	std::cout << "Got a list of arcs" << std::endl;
-//	for(auto& i : arcs) {
-//		std::cout << i.first << ": " << i.second << ", ";
+//	std::cout << "DOne making arcs: " << std::endl;
+//	for(auto i : arcs) {
+//		std::cout << i.first << " -> " << i.second << ", ";
 //	}
 //	std::cout << std::endl;
-
-	/* Iterate through the arcs, and check to see if the first -> second arc is consistent */
-	int count = 0;
-//	std::cout << "Original arc size: " << arcs.size() << std::endl;
-//	for(std::vector<std::pair<Position, Position>>::iterator it = arcs.begin(); it != arcs.end(); ++it) {
+	/* Check each arc for consistency */
 	for(std::size_t i = 0; i < arcs.size(); ++i) {
-//		char c;
-//		std::cin >> c;
-		++count;
-//		std::cout << "Checking arc (" << count << "): " << arcs[i].first << " -> " << arcs[i].second << ": " << std::endl;
-		std::vector<std::size_t> values = getInconsistentValues(puzzle, arcs[i].first, arcs[i].second);
-		if(!values.empty()) {
-//			std::cout << "Not consistent with this value: ";
-//			for(auto i : values) {
-//				std::cout << i << ", ";
-//			}
-//			std::cout << std::endl;
-
-			for(auto v : values) {
-				/* Remove val from first */
-				if(!initial) {
-					_recorder.addPropagation(arcs[i].first, v);
-//					std::cout << "Added to records" << std::endl;
-				}
-				puzzle.access(arcs[i].first).set(v, false);
-//				std::cout << "Removed value from cell" << std::endl;
-				if(puzzle.getDomainSize(arcs[i].first) == 0) {
-					throw utils::No_More_Values;
+		/* There have been reductions made to make the arc consistent */
+//		std::cout << "Checking: " << arcs[i].first << " -> " << arcs[i].second << std::endl;
+		if(reduceArc(puzzle, arcs[i].first, arcs[i].second)) {
+//			std::cout << "Was reduced: " << puzzle.getDomain(arcs[i].first) << std::endl;
+			if(puzzle.getDomainSize(arcs[i].first) == 0) {
+				_logger.log().acpTime += getDuration(start);
+				return false;
+			}
+			/* Add the arcs that are affected by this reduction */
+			std::vector<Position> neighbors = puzzle.getNeighbors(arcs[i].first);
+			for(auto n : neighbors) {
+				if(n != arcs[i].second) {
+//					std::cout << "Adding arc: " << n << " -> " << arcs[i].first << ", ";
+					arcs.push_back(std::make_pair(n, arcs[i].first));
 				}
 			}
-			/* Propagate this arc across neighbors */
+//			std::cout << std::endl;
+		}
+	}
+	_logger.log().acpTime += getDuration(start);
+	return true;
+}
+
+bool Solver::maintainArcConsistency(Puzzle& puzzle, const Position& cell) {
+	/* Check only the arcs from neighbors the cell. Propagate them if needed */
+	auto start = std::chrono::system_clock::now();
+	/* Create arcs list */
+	std::vector<std::pair<Position, Position>> arcs;
+	std::vector<Position> neighbors = puzzle.getNeighbors(cell, true);
+	for(auto& n : neighbors) {
+		arcs.push_back(std::make_pair(cell, n));
+	}
+	/* Check each arc for consistency */
+	for(std::size_t i = 0; i < arcs.size(); ++i) {
+		/* There have been reductions made to make the arc consistent */
+		if(reduceArc(puzzle, arcs[i].first, arcs[i].second, true)) {
+			if(puzzle.getDomainSize(arcs[i].first) == 0) {
+				_logger.log().macTime += getDuration(start);
+				return false;
+			}
+			/* Add the arcs that are affected by this reduction */
 			std::vector<Position> neighbors = puzzle.getNeighbors(arcs[i].first);
 			for(auto n : neighbors) {
 				if(n != arcs[i].second) {
 					arcs.push_back(std::make_pair(n, arcs[i].first));
-	//				std::cout << "Adding new arc(" << arcs.size() << "): " << n << " -> " << arcs[i].first << std::endl;
 				}
 			}
 		}
 	}
+	_logger.log().macTime += getDuration(start);
+	return true;
 }
 
 bool Solver::isLegal(const Puzzle& puzzle, const Position& cell, std::size_t value) {
@@ -690,4 +690,24 @@ double Solver::getDuration(const std::chrono::time_point<std::chrono::system_clo
 	auto end = std::chrono::system_clock::now();
 	std::chrono::duration<long double> duration = end - start;
 	return duration.count();
+}
+
+bool Solver::reduceArc(Puzzle& puzzle, const Position& cell1, const Position& cell2, bool record) {
+	bool reduced = false;
+	Domain d = puzzle.getDomain(cell1);
+//	std::cout << "Got domain: " << d << std::endl;
+	for(std::size_t i = 0; i < d.values.size(); ++i) {
+		if(d.values[i]) {
+//			std::cout << "Checking consistency for " << i << std::endl;
+			if(!isConsistent(puzzle,cell2, i)) {
+//				std::cout << "not consistent" << std::endl;
+				puzzle.access(cell1).set(i, false);
+				if(record) {
+					_recorder.addPropagation(cell1, i);
+				}
+				reduced = true;
+			}
+		}
+	}
+	return reduced;
 }

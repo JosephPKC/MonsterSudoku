@@ -384,12 +384,6 @@ utils::Error getOptionals(Optionals& options, std::vector<std::string> inputs, i
 		if(it->compare(utils::VERB_ARG) == 0) {
 			options.verbose = true;
 		}
-		else if(it->compare(utils::CPP_ARG) == 0) {
-			options.heuristics.hasCPP = true;
-		}
-		else if(it->compare(utils::CP_ARG) == 0) {
-			options.heuristics.hasCP = true;
-		}
 		else if(it->compare(utils::MRV_ARG) == 0) {
 			options.heuristics.hasMRV = true;
 		}

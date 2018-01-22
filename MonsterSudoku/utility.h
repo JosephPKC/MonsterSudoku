@@ -33,8 +33,6 @@ namespace utils {
 	/* Argument and Command Constants */
 	const std::string GEN_ARG = "-g";
 	const std::string VERB_ARG = "-v";
-	const std::string CPP_ARG = "-cpp";
-	const std::string CP_ARG = "-cp";
 	const std::string MRV_ARG = "-mrv";
 	const std::string LCV_ARG = "-lcv";
 	const std::string MD_ARG = "-md";
