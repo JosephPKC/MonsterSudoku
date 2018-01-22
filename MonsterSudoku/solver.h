@@ -69,8 +69,6 @@ private:
 	void postAssign(Puzzle& puzzle, const Position& assignedCell);
 	void assignValue(Puzzle& puzzle, const Position& cell, std::size_t value);
 
-
-
 	/* Heuristic methods */
 	void propagateConstraintsInitial(Puzzle& puzzle);
 	void propagateConstraints(Puzzle& puzzle, const Position& cell, bool record = false);
@@ -82,13 +80,14 @@ private:
 	void updateDegrees(const Puzzle& puzzle, const Position& cell, int change);
 	std::vector<std::size_t> orderByLCV(const Puzzle& puzzle, const Position& cell);
 	bool forwardCheck(const Puzzle& puzzle, const Position& cell, std::size_t tentative);
-
+	void maintainArcConsistency(Puzzle& puzzle, bool initial = false);
 
 	/* Helper methods */
 	bool isLegal(const Puzzle& puzzle, const Position& cell, std::size_t value);
-	bool isConsistent(const Puzzle& puzzle, const Position& cell1, const Position& cell2);
+	bool isConsistent(const Puzzle& puzzle, const Position& cell1, const Position& cell2, std::size_t& val);
 	bool isConsistent(const Puzzle& puzzle, const Position& cell, std::size_t val);
 	bool isConsistent(const std::vector<bool>& values, std::size_t val);
+	std::vector<std::size_t> getInconsistentValues(const Puzzle& puzzle, const Position& cell1, const Position& cell2);
 	double getDuration(const std::chrono::time_point<std::chrono::system_clock>& start) const;
 };
 

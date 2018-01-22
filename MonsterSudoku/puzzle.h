@@ -61,6 +61,10 @@ struct Position {
 		return l.x == r.x && l.y == r.y;
 	}
 
+	friend bool operator != (const Position& l, const Position& r) {
+		return !(l == r);
+	}
+
 	friend std::ostream& operator <<(std::ostream& out, const Position& p) {
 		out << p.x << "," << p.y;
 		return out;

@@ -159,7 +159,7 @@ Puzzle Generator::generateSolvable(int m, int n, int p, int q) {
 		for(std::size_t y = 0; y < puzzle.getSize(); ++y) {
 			puzzle.set(x, y, val);
 			++val;
-			if(val >= n) {
+			if(val >= puzzle.getSize()) {
 				val = 0;
 			}
 		}

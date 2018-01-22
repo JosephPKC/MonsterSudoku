@@ -9,8 +9,8 @@
 
 /* TODO:
  * More refactoring of Solver + Main
- * Implement AC checks for pp and m
- * Implement Fc
+ * Fix MAC -> Believes solvable puzzles are unsolvable with mac.
+ * Add an -u argument that refreshes and displays the puzzle as is while being solved. <- Priority
  * Implement DLX (Dancing Lights X) by converting Sudoku to a Doubly Linked List Sparse Matrix and into an Exact Cover Problem and performing Algorithm X on it.
  */
 
