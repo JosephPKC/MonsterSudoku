@@ -6,6 +6,7 @@ Solver::Solver() {
 
 Solver::Solver(const Heuristics& heuristics) {
 	_heuristics = heuristics;
+	_update = _pause = _sleep = false;
 }
 
 Solver::Solver(bool mrv, bool dh, bool lcv, bool acp, bool mac, bool fc) {
@@ -25,7 +26,19 @@ Log Solver::getLog() const {
 	return _logger.log();
 }
 
-Puzzle Solver::solve(const Puzzle& puzzle, double timeout, bool update, bool pause) {
+void Solver::setUpdate(bool val) {
+	_update = val;
+}
+
+void Solver::setPause(bool val) {
+	_pause = val;
+}
+
+void Solver::setSleep(bool val) {
+	_sleep = val;
+}
+
+Puzzle Solver::solve(const Puzzle& puzzle, double timeout) {
 	/* Initialize */
 	_logger = Logger();
 	_start = std::chrono::system_clock::now();
@@ -42,7 +55,7 @@ Puzzle Solver::solve(const Puzzle& puzzle, double timeout, bool update, bool pau
 	_logger.log().preTime = getDuration(_start);
 
 	/* Search */
-	utils::Error res = search(puzzleC, timeout, update, pause);
+	utils::Error res = search(puzzleC, timeout);
 
 	/* Search Results */
 	if(res != utils::Error::Success) {
@@ -72,7 +85,7 @@ Puzzle Solver::solve(const Puzzle& puzzle, double timeout, bool update, bool pau
 	return puzzleC;
 }
 
-utils::Error Solver::search(Puzzle& puzzle, double timeout, bool update, bool pause) {
+utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 #if DEBUG && PAUSE
 	char c;
 	std::cin >> c;
@@ -126,7 +139,7 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout, bool update, bool pa
 
 			/* Assign the value to the cell */
 			assignValue(puzzle, chosen, *values.begin());
-			updateDisplay(puzzle, chosen, update, pause);
+			updateDisplay(puzzle, chosen);
 #if DEBUG
 			std::cout << puzzle << std::endl;
 #endif
@@ -134,12 +147,12 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout, bool update, bool pa
 			if(!postAssign(puzzle, chosen)) {
 				_logger.log().deadEnds += 1;
 				backtrack(puzzle);
-				updateDisplay(puzzle, chosen, update, pause);
+				updateDisplay(puzzle, chosen);
 				values.erase(values.begin());
 			}
 			else {
 				/* Recur, or try a new value now */
-				auto res = search(puzzle, timeout, update, pause);
+				auto res = search(puzzle, timeout);
 				if(res == utils::Error::Success) {
 					return res;
 				}
@@ -151,7 +164,7 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout, bool update, bool pa
 					_logger.log().deadEnds += 1;
 
 					backtrack(puzzle);
-					updateDisplay(puzzle, chosen, update, pause);
+					updateDisplay(puzzle, chosen);
 					values.erase(values.begin());
     #if DEBUG
 					std::cout << "Backtracked puzzle:\n" << puzzle << std::endl;
@@ -711,14 +724,17 @@ bool Solver::reduceArc(Puzzle& puzzle, const Position& cell1, const Position& ce
 	return reduced;
 }
 
-void Solver::updateDisplay(const Puzzle& puzzle, const Position& changedCell, bool update, bool pause) {
-	if(update) {
+void Solver::updateDisplay(const Puzzle& puzzle, const Position& changedCell) {
+	if(_update) {
 		auto start = std::chrono::system_clock::now();
 		system("CLS");
 		std::cout << puzzle << std::endl;
 		std::cout << "Set " << changedCell << " -> " << puzzle.access(changedCell) << std::endl << std::flush;
-		if(pause) {
+		if(_pause) {
 			system("PAUSE");
+		}
+		if(_sleep) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(300));
 		}
 		_logger.log().disTime += getDuration(start);
 	}

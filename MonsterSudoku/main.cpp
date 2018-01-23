@@ -101,11 +101,13 @@ struct Optionals {
 	bool verbose;
 	bool update;
 	bool pause;
+	bool sleep;
 
 	Optionals() {
 		verbose = false;
 		update = false;
 		pause = false;
+		sleep = false;
 	}
 };
 
@@ -315,8 +317,11 @@ utils::Error doCommand(Generator gen, std::vector<std::string> inputs) {
 
 		/* Solve puzzle */
 		Solver s(options.heuristics);
+		s.setUpdate(options.update);
+		s.setPause(options.pause);
+		s.setSleep(options.sleep);
 		try {
-			Puzzle ps = s.solve(pz, 500, options.update, options.pause);
+			Puzzle ps = s.solve(pz, 500);
 
 			/* Display solution & reports */
 			std::cout << ps << std::endl;
@@ -433,6 +438,9 @@ utils::Error getOptionals(Optionals& options, std::vector<std::string> inputs, i
 		}
 		else if(it->compare(utils::PAU_ARG) == 0) {
 			options.pause = true;
+		}
+		else if(it->compare(utils::SLP_ARG) == 0) {
+			options.sleep = true;
 		}
 		else if(it->compare(utils::MRV_ARG) == 0) {
 			options.heuristics.hasMRV = true;

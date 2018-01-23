@@ -35,6 +35,7 @@ namespace utils {
 	const std::string VERB_ARG = "-v";
 	const std::string UPD_ARG = "-u";
 	const std::string PAU_ARG = "-p";
+	const std::string SLP_ARG = "-s";
 	const std::string MRV_ARG = "-mrv";
 	const std::string LCV_ARG = "-lcv";
 	const std::string MD_ARG = "-md";
