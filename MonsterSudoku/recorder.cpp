@@ -4,6 +4,10 @@ Recorder::Recorder() {
 	// Nothing
 }
 
+std::size_t Recorder::getSize() const {
+	return _records.size();
+}
+
 void Recorder::add(const Position& position, std::size_t value, int degrees, const Domain& domain) {
 	Record r(position, value, domain, degrees);
 	_records.push_back(r);
@@ -25,6 +29,7 @@ Record Recorder::undo() {
 	_records.pop_back();
 	return r;
 }
+
 
 std::ostream& operator <<(std::ostream& out, const Recorder& r) {
 	for(std::vector<Record>::const_iterator it = r._records.begin(); it != r._records.end(); ++it) {

@@ -111,6 +111,7 @@ public:
 	void reset();
 	void reset(std::size_t x, std::size_t y);
 	void reset(const Position& p);
+	void displayUpdate(const Position& special) const;
 
 	friend std::ostream& operator << (std::ostream& out, const Puzzle& p);
 

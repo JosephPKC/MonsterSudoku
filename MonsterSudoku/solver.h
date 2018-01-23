@@ -2,6 +2,7 @@
 #define SOLVER_H
 #include <chrono>
 #include <ctime>
+#include <cstdlib>
 #include <algorithm>
 #include "puzzle.h"
 #include "recorder.h"
@@ -47,7 +48,7 @@ public:
 	Heuristics& getHeuristics();
 	Log getLog() const;
 
-	Puzzle solve(const Puzzle& puzzle, double timeout = 300);
+	Puzzle solve(const Puzzle& puzzle, double timeout = 300, bool update = false, bool pause = false);
 private:
 	Heuristics _heuristics;
 	Recorder _recorder;
@@ -56,7 +57,7 @@ private:
 	int** _degrees;
 
 	/* Outer algorithms */
-	utils::Error search(Puzzle& puzzle, double timeout);
+	utils::Error search(Puzzle& puzzle, double timeout, bool update, bool pause);
 	Position selectNextCell(const Puzzle& puzzle);
 	std::vector<std::size_t> orderValues(const Puzzle& puzzle, const Position& cell);
 	void backtrack(Puzzle& puzzle);
@@ -87,6 +88,7 @@ private:
 	std::vector<std::size_t> getInconsistentValues(const Puzzle& puzzle, const Position& cell1, const Position& cell2);
 	double getDuration(const std::chrono::time_point<std::chrono::system_clock>& start) const;
 	bool reduceArc(Puzzle& puzzle, const Position& cell1, const Position& cell2, bool record = false);
+	void updateDisplay(const Puzzle& puzzle, const Position& changedCell, bool update, bool pause);
 };
 
 #endif // SOLVER_H

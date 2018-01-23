@@ -58,6 +58,8 @@ class Recorder {
 public:
 	Recorder();
 
+	std::size_t getSize() const;
+
 	void add(const Position& position, std::size_t value, int degrees, const Domain& domain);
 	void addPropagation(const Position& position, std::size_t elimination);
 

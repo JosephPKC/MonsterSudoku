@@ -25,7 +25,7 @@ Log Solver::getLog() const {
 	return _logger.log();
 }
 
-Puzzle Solver::solve(const Puzzle& puzzle, double timeout) {
+Puzzle Solver::solve(const Puzzle& puzzle, double timeout, bool update, bool pause) {
 	/* Initialize */
 	_logger = Logger();
 	_start = std::chrono::system_clock::now();
@@ -36,12 +36,13 @@ Puzzle Solver::solve(const Puzzle& puzzle, double timeout) {
 		_logger.log().preTime = getDuration(_start);
 		_logger.log().solved = true;
 		_logger.log().totalTime = getDuration(_start);
+		_logger.log().solveTime = _logger.log().totalTime - _logger.log().disTime;
 		throw utils::Error::No_More_Values;
 	}
 	_logger.log().preTime = getDuration(_start);
 
 	/* Search */
-	utils::Error res = search(puzzleC, timeout);
+	utils::Error res = search(puzzleC, timeout, update, pause);
 
 	/* Search Results */
 	if(res != utils::Error::Success) {
@@ -55,6 +56,7 @@ Puzzle Solver::solve(const Puzzle& puzzle, double timeout) {
 			_logger.log().solved = true;
 		}
 		_logger.log().totalTime = getDuration(_start);
+		_logger.log().solveTime = _logger.log().totalTime - _logger.log().disTime;
 
 		throw res;
 	}
@@ -62,6 +64,7 @@ Puzzle Solver::solve(const Puzzle& puzzle, double timeout) {
 	_logger.log().solvable = true;
 	_logger.log().solved = true;
 	_logger.log().totalTime = getDuration(_start);
+	_logger.log().solveTime = _logger.log().totalTime - _logger.log().disTime;
 
 	/* Clean up  */
 	_recorder = Recorder();
@@ -69,7 +72,7 @@ Puzzle Solver::solve(const Puzzle& puzzle, double timeout) {
 	return puzzleC;
 }
 
-utils::Error Solver::search(Puzzle& puzzle, double timeout) {
+utils::Error Solver::search(Puzzle& puzzle, double timeout, bool update, bool pause) {
 #if DEBUG && PAUSE
 	char c;
 	std::cin >> c;
@@ -81,7 +84,7 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 	}
 
 	/* Check for timeout (fail case) */
-	if(getDuration(_start) >= timeout) {
+	if(getDuration(_start) >= timeout + _logger.log().disTime) {
 		return utils::Error::Timeout;
 	}
 
@@ -123,55 +126,51 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 
 			/* Assign the value to the cell */
 			assignValue(puzzle, chosen, *values.begin());
-
+			updateDisplay(puzzle, chosen, update, pause);
 #if DEBUG
 			std::cout << puzzle << std::endl;
 #endif
-
 			/* Do post assignment processing */
 			if(!postAssign(puzzle, chosen)) {
 				_logger.log().deadEnds += 1;
 				backtrack(puzzle);
+				updateDisplay(puzzle, chosen, update, pause);
 				values.erase(values.begin());
 			}
 			else {
 				/* Recur, or try a new value now */
-				auto res = search(puzzle, timeout);
+				auto res = search(puzzle, timeout, update, pause);
 				if(res == utils::Error::Success) {
 					return res;
 				}
 				else if(res != utils::Error::Timeout) {
-
     #if DEBUG
 					std::cout << "Backtracking: " << chosen << " & " << *values.begin() << std::endl;
     #endif
-
+					/* Look at the first regular backtrack */
 					_logger.log().deadEnds += 1;
-					backtrack(puzzle);
 
+					backtrack(puzzle);
+					updateDisplay(puzzle, chosen, update, pause);
+					values.erase(values.begin());
     #if DEBUG
 					std::cout << "Backtracked puzzle:\n" << puzzle << std::endl;
     #endif
 
-					values.erase(values.begin());
 				}
 				else {
-
     #if DEBUG
 					std::cout << "Timeout" << std::endl;
     #endif
-
 					return res;
 				}
 			}
 		}
 		else {
 			/* Remove value from domain */
-
 #if DEBUG
 			std::cout << "Value: " << *values.begin() << " not legal" << std::endl;
 #endif
-
 			values.erase(values.begin());
 		}
 	}
@@ -710,4 +709,17 @@ bool Solver::reduceArc(Puzzle& puzzle, const Position& cell1, const Position& ce
 		}
 	}
 	return reduced;
+}
+
+void Solver::updateDisplay(const Puzzle& puzzle, const Position& changedCell, bool update, bool pause) {
+	if(update) {
+		auto start = std::chrono::system_clock::now();
+		system("CLS");
+		std::cout << puzzle << std::endl;
+		std::cout << "Set " << changedCell << " -> " << puzzle.access(changedCell) << std::endl << std::flush;
+		if(pause) {
+			system("PAUSE");
+		}
+		_logger.log().disTime += getDuration(start);
+	}
 }

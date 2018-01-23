@@ -33,12 +33,16 @@ namespace utils {
 	/* Argument and Command Constants */
 	const std::string GEN_ARG = "-g";
 	const std::string VERB_ARG = "-v";
+	const std::string UPD_ARG = "-u";
+	const std::string PAU_ARG = "-p";
 	const std::string MRV_ARG = "-mrv";
 	const std::string LCV_ARG = "-lcv";
 	const std::string MD_ARG = "-md";
 	const std::string ACP_ARG = "-acp";
 	const std::string MAC_ARG = "-mac";
 	const std::string FC_ARG = "-fc";
+	const std::string DO_ARG = "-do";
+	const std::string CP_ARG = "-cp";
 	const std::string ALL_ARG = "-all";
 
 	const std::string GEN_CMD = "gen";

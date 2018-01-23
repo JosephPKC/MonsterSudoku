@@ -9,9 +9,49 @@
 
 /* TODO:
  * More refactoring of Solver + Main
- * Fix MAC -> Believes solvable puzzles are unsolvable with mac.
- * Add an -u argument that refreshes and displays the puzzle as is while being solved. <- Priority
+ * Backjumping - Given a failure at some position, backtrack to the most recent assignment that affected that position's domain.
+ *		Given a position to backjump from:
+ *		From the last record in recorder to the first:
+ *		Search the record's propagation vector for the given position.
+ *		If found, backtrack and return a special failure state called backjump to X.
+ *		Keep failing and backtracking until you backtrack X.
+ *		If not found, just backtrack once.
  * Implement DLX (Dancing Lights X) by converting Sudoku to a Doubly Linked List Sparse Matrix and into an Exact Cover Problem and performing Algorithm X on it.
+ */
+
+/* Report TODO:
+ * Sizes n = {4, 6, 9, 12, 15, 16, 20, 24, 25, 30)
+ * Generate 10 random SOLVABLE puzzles of each n.
+ * Do the reports for cs 171 again for some analysis. See if this implementation is actually better than the previous one.
+ * Will probably want to create one more class: Reporter class that will handle all of this: generating test puzzles, depending on the input size lists, solving them, calculating the hardest r and m, and writing out the times, nodes, and dead ends for each test, averaging them, finding the standard deviation, etc.
+ * Part I: Analysis of Heuristics
+ * Generate 10 random solvable puzzles with parameters m = 17, n = 9, p = q = 3 for testing. This can be done via other sources.
+ * For each heuristic, run all 10 puzzles and write out the log.
+ * Then do one with three choice heuristics, the three constraint heuristics, and all of them.
+ * Do one with only without acp, and only without fc, and only without mac.
+ * Determine the best combination based on time, nodes, dead ends, and std dev time.
+ *
+ * Part II: Hardest R of 9x9
+ * M = 4, 8, 12, 16, 17, 18, 19, 20, 21, 22, 24, 28, 32, 36
+ * For each m, generate 10 random puzzles with paramters n = 9, p = q = 3
+ * Write down the nodes, dead ends, time, std dev time, and % solvable
+ * Determine the hardest R, i.e. the worst m / n^2.
+ * Analyze the solve rate based on R.
+ *
+ * Part III: Largest N for Hardest R9
+ * Set timeout to be 300s.
+ * n-p-q = 12-3-4, 15-3-5, 16-4-4, 16-3-6, 20-4-5, 21-3-7, 24-4-6, 27-3-9, 28-4-7, 30-5-6, 30-5-6, 32-4-8, 35-5-7. Use the R found in Part II.
+ * For each n, p, q, r generate 10 random puzzles.
+ * Write down the nodes, dead ends, time, std dev time, and % completed
+ * Determine the largest N that can be completed reasonably.
+ *
+ * Part IV: Hardest R for Largest N for Hardest R9
+ * Bring in the n, p, q from Part III
+ * Choose several Ms that fit.
+ * For each m, generate 10 random puzzles.
+ * Write down the nodes, time, dead ends, std dev time, and % solvable
+ * Determine the hardest R for this N
+ * Check if hardest RN = hardest R9
  */
 
 /* DLX Stuff
@@ -59,9 +99,13 @@
 struct Optionals {
 	Heuristics heuristics;
 	bool verbose;
+	bool update;
+	bool pause;
 
 	Optionals() {
 		verbose = false;
+		update = false;
+		pause = false;
 	}
 };
 
@@ -272,7 +316,7 @@ utils::Error doCommand(Generator gen, std::vector<std::string> inputs) {
 		/* Solve puzzle */
 		Solver s(options.heuristics);
 		try {
-			Puzzle ps = s.solve(pz, 500);
+			Puzzle ps = s.solve(pz, 500, options.update, options.pause);
 
 			/* Display solution & reports */
 			std::cout << ps << std::endl;
@@ -384,6 +428,12 @@ utils::Error getOptionals(Optionals& options, std::vector<std::string> inputs, i
 		if(it->compare(utils::VERB_ARG) == 0) {
 			options.verbose = true;
 		}
+		else if(it->compare(utils::UPD_ARG) == 0) {
+			options.update = true;
+		}
+		else if(it->compare(utils::PAU_ARG) == 0) {
+			options.pause = true;
+		}
 		else if(it->compare(utils::MRV_ARG) == 0) {
 			options.heuristics.hasMRV = true;
 		}
@@ -400,6 +450,16 @@ utils::Error getOptionals(Optionals& options, std::vector<std::string> inputs, i
 			options.heuristics.hasMAC = true;
 		}
 		else if(it->compare(utils::FC_ARG) == 0) {
+			options.heuristics.hasFC = true;
+		}
+		else if(it->compare(utils::DO_ARG) == 0) {
+			options.heuristics.hasMRV = true;
+			options.heuristics.hasMD = true;
+			options.heuristics.hasLCV = true;
+		}
+		else if(it->compare(utils::CP_ARG) == 0) {
+			options.heuristics.hasACP = true;
+			options.heuristics.hasMAC = true;
 			options.heuristics.hasFC = true;
 		}
 		else if(it->compare(utils::ALL_ARG) == 0) {
