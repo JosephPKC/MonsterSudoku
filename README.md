@@ -11,13 +11,9 @@ This also has a number of heuristic algorithms that can be enabled or disabled. 
   
   - Max degrees
   
-  - Regular constraint propagation
-  
   - Arc consistency check
   
   - Forward check
-
-## This is a two-part program: a sudoku puzzle generator and solver.
 
 ### Generator
 
@@ -62,6 +58,35 @@ The input file is expected to be in a specific format:
 
 To generate a puzzle: gen m n p q file_path. This will generate a random puzzle based on the m, n, p, q parameters and save it to a text file at file_path.
 
-To solve a puzzle: solve file_path [-v]. This will load up a puzzle from the file_path and solve it. The -v optional argument will give you a detailed report at the end.
+To solve a puzzle: solve file_path [optional arguments]. This will load up a puzzle from the file_path and solve it.
+Alternatively, you can also do solve -g m n p q [optional arguments]. This will first randomly generate a puzzle based on the m, n, p, q parameters , and then solve it.
 
-Alternatively, you can also do solve -g m n p q [-v]. This will first randomly generate a puzzle based on the m, n, p, q parameters , and then solve it.
+### Optional Arguments
+
+When solving a puzzle, you can set various options. These are:
+
+  - -v: After solving the puzzle, or experiencing a timeout, it will display a report displaying the time taken by each heuristic and algorithm, # of nodes, # of dead ends, etc.
+  
+  - -u: Will also display the current puzzle state after each assignment and backtrack.
+  
+  - -p: Used with -u, it will pause the solving after each assignment and backtrack until an input is received.
+  
+  - -s: Used with -u, it will add a delay after each display.
+  
+  - -all: Use all heuristics to solve the puzzle.
+  
+  - -mrv: Enable the mrv heuristic.
+  
+  - -md: Enable the md heuristic.
+  
+  - -lcv: Enable the lcv heuristic.
+  
+  - -acp: Enable arc consistency-3 check as a pre-processor.
+  
+  - -mac: Enable arc consistency-3 check after each assignment.
+  
+  - -fc: Enable forward check after each assignment.
+  
+  - -do: Only enable the dynamic ordering heuristics: mrv, md, lcv.
+  
+  - -cp: Only enable th arc consistency-3 checks and forward checks.
