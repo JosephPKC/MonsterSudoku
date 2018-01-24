@@ -65,8 +65,6 @@ Puzzle Solver::solve(const Puzzle& puzzle, double timeout) {
 			_logger.log().timeout = true;
 		}
 		else if(res == utils::Error::No_More_Values) {
-			/* Unsolvable but Solved */
-			_logger.log().solved = true;
 		}
 		_logger.log().totalTime = getDuration(_start);
 		_logger.log().solveTime = _logger.log().totalTime - _logger.log().disTime;

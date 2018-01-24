@@ -1,5 +1,6 @@
 #include "generator.h"
 #include "solver.h"
+#include "reporter.h"
 
 /* Some important links:
  * https://www.ics.uci.edu/~rickl/courses/AI-projects/sudoku-solver/SudokuProjectAssignments_20160209.pdf
@@ -339,6 +340,66 @@ utils::Error doCommand(Generator gen, std::vector<std::string> inputs) {
 	else if(it->compare(utils::HELP_CMD) == 0) {
 		std::cout << "gen m n p q file_path: Generate a random puzzle with parameters m (initially filled cells), n (size), p (block length), q (block width), and save to file_path. Constraints: 0 < m < n^2, p * q = n, m, n, p, q > 0." << std::endl;
 		std::cout << "solve file_path | [-g m n p q] (-v): Solve a given puzzle. Either load a puzzle from a file via file_path, or generate a random puzzle via m, n, p, and q. Use -v to make the end report detailed." << std::endl;
+	}
+	else if(it->compare("test") == 0) {
+		++it;
+		if(it != inputs.end()) {
+			Reporter r;
+			std::string test = *it;
+			if(test.compare("1") == 0) {
+				/* Heuristic Analysis */
+				std::vector<std::string> paths;
+				for(int i = 0; i < 10; ++i) {
+					paths.push_back("../MonsterSudoku/inputs/2_test" + std::to_string(i + 1) + ".txt");
+				}
+				std::vector<Heuristics> heuristics;
+				heuristics.push_back(Heuristics(false, false, false, false, false, false));
+				heuristics.push_back(Heuristics(false, false, false, false, false, true));
+				heuristics.push_back(Heuristics(true, false, false, false, false, false));
+				heuristics.push_back(Heuristics(false, true, false, false, false, false));
+				heuristics.push_back(Heuristics(false, false, true, false, false, false));
+				heuristics.push_back(Heuristics(false, false, false, true, false, false));
+				heuristics.push_back(Heuristics(false, false, false, false, true, false));
+				heuristics.push_back(Heuristics(false, false, false, true, true, true));
+				heuristics.push_back(Heuristics(true, true, true, false, false, false));
+				heuristics.push_back(Heuristics(true, false, true, false, false, false));
+				heuristics.push_back(Heuristics(true, false, true, true, true, true));
+				heuristics.push_back(Heuristics(true, true, true, true, true, true));
+
+				std::vector<Report> reports;
+				for(std::size_t i = 0; i < heuristics.size(); ++i) {
+					reports.push_back(r.runHeuristicsAnalysis(paths, heuristics[i], 300));
+					std::cout << "For heuristic: " << heuristics[i] << std:: endl;
+					std::cout << reports[i] << std::endl;
+				}
+
+				std::ofstream out("../MonsterSudoku/inputs/2_results.txt");
+				if(out.is_open()) {
+					for(std::size_t i = 0; i < reports.size(); ++i) {
+						std::cout << "For heuristic: " << heuristics[i] << std:: endl;
+						std::cout << reports[i] << std::endl;
+						out << heuristics[i] << std::endl;
+						out << reports[i] << std::endl << std::endl;
+					}
+
+				}
+			}
+			else if(test.compare("2") == 0) {
+				/* Estimation of Hardest R9 */
+
+			}
+			else if(test.compare("3") == 0) {
+				/* Largest N Completable at the Hardest R9 */
+
+			}
+			else if(test.compare("4") == 0) {
+				/* Does Hardest R9 scale with Largest N */
+
+			}
+			else {
+
+			}
+		}
 	}
 	else {
 		return utils::Error::Unknown_Command;

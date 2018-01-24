@@ -1,0 +1,36 @@
+000000
+Total: 39.2957s, Solve: 39.2957s, Pre: 0.00070198s, Backtrack: 0.97231s, CPP: 0.00065185s, CP: 7.86409s, MRV: 0s, LCV: 0s, MD: 0s, MDU: 0s, ACP: 0s, MAC: 0s, FC: 0s, All Nodes: 901315, Legal Nodes: 262090, Dead Ends: 262032, % Solvable: 0.9, % Timeout: 0, % Completable: 1
+
+000001
+Total: 38.5434s, Solve: 38.5434s, Pre: 0.00050275s, Backtrack: 0.94258s, CPP: 0.00045214s, CP: 7.69236s, MRV: 0s, LCV: 0s, MD: 0s, MDU: 0s, ACP: 0s, MAC: 0s, FC: 0s, All Nodes: 901315, Legal Nodes: 262090, Dead Ends: 262032, % Solvable: 0.9, % Timeout: 0, % Completable: 1
+
+100000
+Total: 15.0611s, Solve: 15.0611s, Pre: 0.00054906s, Backtrack: 0.209774s, CPP: 0.00050047s, CP: 1.64609s, MRV: 9.39614s, LCV: 0s, MD: 0s, MDU: 0s, ACP: 0s, MAC: 0s, FC: 0s, All Nodes: 161350, Legal Nodes: 56169, Dead Ends: 56111, % Solvable: 0.9, % Timeout: 0, % Completable: 1
+
+010000
+Total: 300s, Solve: 300s, Pre: 0.00231648s, Backtrack: 6.94751s, CPP: 0.00055899s, CP: 59.3986s, MRV: 0s, LCV: 0s, MD: 1.531s, MDU: 89.3836s, ACP: 0s, MAC: 0s, FC: 0s, All Nodes: 5315965, Legal Nodes: 1937753, Dead Ends: 1937717, % Solvable: 0, % Timeout: 1, % Completable: 0
+
+001000
+Total: 0.916215s, Solve: 0.916215s, Pre: 0.00059989s, Backtrack: 0.016561s, CPP: 0.00054988s, CP: 0.132379s, MRV: 0s, LCV: 0.278261s, MD: 0s, MDU: 0s, ACP: 0s, MAC: 0s, FC: 0s, All Nodes: 12075, Legal Nodes: 4186, Dead Ends: 4128, % Solvable: 0.9, % Timeout: 0, % Completable: 1
+
+000100
+Total: 38.4658s, Solve: 38.4658s, Pre: 0.0187627s, Backtrack: 0.923465s, CPP: 0.00045095s, CP: 7.66424s, MRV: 0s, LCV: 0s, MD: 0s, MDU: 0s, ACP: 0.0364229s, MAC: 0s, FC: 0s, All Nodes: 888725, Legal Nodes: 257130, Dead Ends: 257072, % Solvable: 0.9, % Timeout: 0, % Completable: 1
+
+000010
+Total: 26.4882s, Solve: 26.4882s, Pre: 0.00070725s, Backtrack: 0.456585s, CPP: 0.00050735s, CP: 3.83053s, MRV: 0s, LCV: 0s, MD: 0s, MDU: 0s, ACP: 0s, MAC: 15.8377s, FC: 0s, All Nodes: 405099, Legal Nodes: 135996, Dead Ends: 135939, % Solvable: 0.9, % Timeout: 0, % Completable: 1
+
+000111
+Total: 25.2502s, Solve: 25.2502s, Pre: 0.0185665s, Backtrack: 0.418502s, CPP: 0.00045005s, CP: 3.65361s, MRV: 0s, LCV: 0s, MD: 0s, MDU: 0s, ACP: 0.0360356s, MAC: 15.1569s, FC: 0s, All Nodes: 391046, Legal Nodes: 130624, Dead Ends: 130566, % Solvable: 0.9, % Timeout: 0, % Completable: 1
+
+111000
+Total: 30.0306s, Solve: 30.0306s, Pre: 0.00201411s, Backtrack: 0.212257s, CPP: 0.00045933s, CP: 1.86094s, MRV: 16.4791s, LCV: 4.01608s, MD: 0.0193772s, MDU: 2.80164s, ACP: 0s, MAC: 0s, FC: 0s, All Nodes: 203564, Legal Nodes: 67012, Dead Ends: 66951, % Solvable: 0.9, % Timeout: 0.1, % Completable: 0.9
+
+101000
+Total: 12.8338s, Solve: 12.8338s, Pre: 0.00060567s, Backtrack: 0.125591s, CPP: 0.00045524s, CP: 1.08156s, MRV: 6.26781s, LCV: 2.68986s, MD: 0s, MDU: 0s, ACP: 0s, MAC: 0s, FC: 0s, All Nodes: 116665, Legal Nodes: 37986, Dead Ends: 37928, % Solvable: 0.9, % Timeout: 0, % Completable: 1
+
+101111
+Total: 15.2296s, Solve: 15.2296s, Pre: 0.0183701s, Backtrack: 0.123115s, CPP: 0.00055184s, CP: 1.07203s, MRV: 6.3235s, LCV: 2.68334s, MD: 0s, MDU: 0s, ACP: 0.0353354s, MAC: 4.64936s, FC: 0s, All Nodes: 116665, Legal Nodes: 37986, Dead Ends: 37928, % Solvable: 0.9, % Timeout: 0, % Completable: 1
+
+111111
+Total: 30.0495s, Solve: 30.0495s, Pre: 0.0196789s, Backtrack: 0.195699s, CPP: 0.0004538s, CP: 1.67053s, MRV: 14.7715s, LCV: 3.56683s, MD: 0.0149479s, MDU: 2.54209s, ACP: 0.0353313s, MAC: 6.1823s, FC: 0s, All Nodes: 180731, Legal Nodes: 60007, Dead Ends: 59945, % Solvable: 0.9, % Timeout: 0.1, % Completable: 0.9
+

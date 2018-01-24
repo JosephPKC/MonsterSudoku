@@ -29,6 +29,15 @@ struct Heuristics {
 		hasFC = false;
 	}
 
+	Heuristics(bool mrv, bool md, bool lcv, bool acp, bool mac, bool fc) {
+		hasMRV = mrv;
+		hasMD = md;
+		hasLCV = lcv;
+		hasACP = acp;
+		hasMAC = mac;
+		hasFC = fc;
+	}
+
 	void toggleAll(bool val) {
 		hasMRV = hasMD = hasLCV = hasACP = hasMAC = hasFC = val;
 	}
