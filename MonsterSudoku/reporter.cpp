@@ -12,19 +12,23 @@ void Reporter::generateTestPuzzles(int a, const std::string& prefix, int m, int 
 	}
 }
 
-void Reporter::generateTestPuzzles(const std::string& prefix, const std::vector<int>& m, int n, int p, int q) {
+void Reporter::generateTestPuzzles(int a, const std::string& prefix, const std::vector<int>& m, int n, int p, int q) {
 	Generator g;
-	for(std::size_t i = 0; i < m.size(); ++i) {
-		Puzzle puzzle = g.generate(m[i], n, p, q);
-writePuzzleToFile(prefix + std::to_string(i + 1) + ".txt", puzzle);
+	for(int i = 0; i < a; ++i) {
+		for(std::size_t j = 0; j < m.size(); ++j) {
+			Puzzle puzzle = g.generate(m[j], n, p, q);
+	writePuzzleToFile(prefix + std::to_string(m[j]) + "_" + std::to_string(i + 1) + ".txt", puzzle);
+		}
 	}
 }
 
-void Reporter::generateTestPuzzles(const std::string& prefix, const std::vector<int>& m, const std::vector<int>& n, const std::vector<int>& p, const std::vector<int>& q) {
+void Reporter::generateTestPuzzles(int a, const std::string& prefix, const std::vector<int>& m, const std::vector<int>& n, const std::vector<int>& p, const std::vector<int>& q) {
 	Generator g;
-	for(std::size_t i = 0; i < m.size(); ++i) {
-		Puzzle puzzle = g.generate(m[i], n[i], p[i], q[i]);
-writePuzzleToFile(prefix + std::to_string(i + 1) + ".txt", puzzle);
+	for(int i = 0; i < a; ++i) {
+		for(std::size_t j = 0; j < m.size(); ++j) {
+			Puzzle puzzle = g.generate(m[j], n[j], p[j], q[j]);
+	writePuzzleToFile(prefix + std::to_string(m[j]) + "_" + std::to_string(n[j]) + "_"  + std::to_string(p[j]) + "_"  + std::to_string(q[j]) + "_" + std::to_string(i + 1) + ".txt", puzzle);
+		}
 	}
 }
 
@@ -38,6 +42,7 @@ Report Reporter::runHeuristicsAnalysis(const std::vector<std::string>& paths, co
 
 			Puzzle p = g.generate(paths[i]);
 			std::cout << std::endl << "Loaded " << paths[i] << std::endl;
+			std::cout << "Params: " << p.getParameters() << std::endl;
 			std::cout << "Heuristic: " << combination << std::endl;
 			std::cout << p << std::endl;
 			Puzzle ps = s.solve(p, timeout);
@@ -86,7 +91,7 @@ ReportInfo Reporter::createReportFromLog(const Log& l) {
 	return r;
 }
 
-void Reporter::setAverage(ReportInfo& r, int n) {
+void Reporter::setAverage(ReportInfo& r, float n) {
 	r.acpTime /= n;
 	r.macTime /= n;
 	r.fcTime /= n;

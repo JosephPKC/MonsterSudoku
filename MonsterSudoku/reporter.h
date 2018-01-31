@@ -95,16 +95,17 @@ public:
 	/* Generate a puzzles of the same parameters */
 	void generateTestPuzzles(int a, const std::string& prefix, int m, int n, int p, int q);
 	/* Generate a puzzles of different m parameters */
-	void generateTestPuzzles(const std::string& prefix, const std::vector<int>& m, int n, int p, int q);
+	void generateTestPuzzles(int a, const std::string& prefix, const std::vector<int>& m, int n, int p, int q);
 	/* Generate a puzzles of different m, n, p, q parameters */
-	void generateTestPuzzles(const std::string& prefix, const std::vector<int>& m, const std::vector<int>& n, const std::vector<int>& p, const std::vector<int>& q);
+	void generateTestPuzzles(int a, const std::string& prefix, const std::vector<int>& m, const std::vector<int>& n, const std::vector<int>& p, const std::vector<int>& q);
 
 	/* Run the solver with heuristics for each puzzle, and find average */
 	Report runHeuristicsAnalysis(const std::vector<std::string>& paths, const Heuristics& combination, double timeout);
+//	Report runHardestRAnalysis(const std::vector<std::string>& paths, const Heuristics& combination, double timeout);
 
 private:
 	ReportInfo createReportFromLog(const Log& l);
-	void setAverage(ReportInfo& r, int n);
+	void setAverage(ReportInfo& r, float n);
 	void writePuzzleToFile(const std::string& path, const Puzzle& p);
 };
 

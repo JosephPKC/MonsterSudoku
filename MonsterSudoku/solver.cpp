@@ -123,7 +123,7 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 	}
 
 	/* While there are still values, try to assign that value to the cell */
-	while(!values.empty()) {
+	for(std::vector<std::size_t>::iterator it = values.begin(); it != values.end(); ++it) {
 
 #if DEBUG
 		std::cout << "Value Chosen: " << *values.begin() << std::endl;
@@ -132,11 +132,11 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 		_logger.log().allNodes += 1;
 
 		/* Do pre assignment processing */
-		if(preAssign(puzzle, chosen, *values.begin())) {
+		if(preAssign(puzzle, chosen, *it)) {
 			_logger.log().nodes += 1;
 
 			/* Assign the value to the cell */
-			assignValue(puzzle, chosen, *values.begin());
+			assignValue(puzzle, chosen, *it);
 			updateDisplay(puzzle, chosen);
 #if DEBUG
 			std::cout << puzzle << std::endl;
@@ -146,7 +146,6 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 				_logger.log().deadEnds += 1;
 				backtrack(puzzle);
 				updateDisplay(puzzle, chosen);
-				values.erase(values.begin());
 			}
 			else {
 				/* Recur, or try a new value now */
@@ -163,7 +162,6 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 
 					backtrack(puzzle);
 					updateDisplay(puzzle, chosen);
-					values.erase(values.begin());
     #if DEBUG
 					std::cout << "Backtracked puzzle:\n" << puzzle << std::endl;
     #endif
@@ -182,7 +180,6 @@ utils::Error Solver::search(Puzzle& puzzle, double timeout) {
 #if DEBUG
 			std::cout << "Value: " << *values.begin() << " not legal" << std::endl;
 #endif
-			values.erase(values.begin());
 		}
 	}
 	/* If we run out of values, and no success, return fail */

@@ -20,41 +20,6 @@
  * Implement DLX (Dancing Lights X) by converting Sudoku to a Doubly Linked List Sparse Matrix and into an Exact Cover Problem and performing Algorithm X on it.
  */
 
-/* Report TODO:
- * Sizes n = {4, 6, 9, 12, 15, 16, 20, 24, 25, 30)
- * Generate 10 random SOLVABLE puzzles of each n.
- * Do the reports for cs 171 again for some analysis. See if this implementation is actually better than the previous one.
- * Will probably want to create one more class: Reporter class that will handle all of this: generating test puzzles, depending on the input size lists, solving them, calculating the hardest r and m, and writing out the times, nodes, and dead ends for each test, averaging them, finding the standard deviation, etc.
- * Part I: Analysis of Heuristics
- * Generate 10 random solvable puzzles with parameters m = 17, n = 9, p = q = 3 for testing. This can be done via other sources.
- * For each heuristic, run all 10 puzzles and write out the log.
- * Then do one with three choice heuristics, the three constraint heuristics, and all of them.
- * Do one with only without acp, and only without fc, and only without mac.
- * Determine the best combination based on time, nodes, dead ends, and std dev time.
- *
- * Part II: Hardest R of 9x9
- * M = 4, 8, 12, 16, 17, 18, 19, 20, 21, 22, 24, 28, 32, 36
- * For each m, generate 10 random puzzles with paramters n = 9, p = q = 3
- * Write down the nodes, dead ends, time, std dev time, and % solvable
- * Determine the hardest R, i.e. the worst m / n^2.
- * Analyze the solve rate based on R.
- *
- * Part III: Largest N for Hardest R9
- * Set timeout to be 300s.
- * n-p-q = 12-3-4, 15-3-5, 16-4-4, 16-3-6, 20-4-5, 21-3-7, 24-4-6, 27-3-9, 28-4-7, 30-5-6, 30-5-6, 32-4-8, 35-5-7. Use the R found in Part II.
- * For each n, p, q, r generate 10 random puzzles.
- * Write down the nodes, dead ends, time, std dev time, and % completed
- * Determine the largest N that can be completed reasonably.
- *
- * Part IV: Hardest R for Largest N for Hardest R9
- * Bring in the n, p, q from Part III
- * Choose several Ms that fit.
- * For each m, generate 10 random puzzles.
- * Write down the nodes, time, dead ends, std dev time, and % solvable
- * Determine the hardest R for this N
- * Check if hardest RN = hardest R9
- */
-
 /* DLX Stuff
  * http://buzzard.ups.edu/talks/beezer-2010-AIMS-sudoku.pdf
  */
@@ -82,19 +47,6 @@
  *		Repeat q times, then move right n spaces.
  *		Do the above p times.
  *		By now, it should hit the end, so go back all the way to the left and repeat.
- */
-
-/* A Generator that guarantees solvable puzzles:
- * Fill in the puzzle completely so that it is legal.
- *		Generate the first row by going in order.
- *		Then go to the next row and offset it by q.
- *		If the offset addition forces it to go over n, modulate it and then add 1.
- *		Continue until puzzle is completely filled.
- * First, randomly swap any two block rows (entire blocks in a row).
- * Then, randomly swap any two block columns
- * Then, within randomly selected block rows, randomly swap any two rows within that block row.
- * Then, within randomly selected block columns, randomly swap any two columns within that block column.
- * Then randomly choose and empty out cells up to n^2 - m.
  */
 
 struct Optionals {
@@ -257,7 +209,7 @@ utils::Error doCommand(Generator gen, std::vector<std::string> inputs) {
 		/* Generate puzzle and save to file */
 		Puzzle puzzle = gen.generate(m, n, p, q);
 		try {
-			gen.saveToFile(puzzle, "../MonsterSudoku/inputs/" + file_path);
+			gen.saveToFile(puzzle, file_path);
 		}
 		catch(utils::Error e) {
 			return e;
@@ -303,7 +255,7 @@ utils::Error doCommand(Generator gen, std::vector<std::string> inputs) {
 			std::string file_path = *it;
 			Generator g;
 			try {
-				pz = g.generate("../MonsterSudoku/inputs/" + file_path);
+				pz = g.generate(file_path);
 			}
 			catch(utils::Error e) {
 				return e;
@@ -340,66 +292,6 @@ utils::Error doCommand(Generator gen, std::vector<std::string> inputs) {
 	else if(it->compare(utils::HELP_CMD) == 0) {
 		std::cout << "gen m n p q file_path: Generate a random puzzle with parameters m (initially filled cells), n (size), p (block length), q (block width), and save to file_path. Constraints: 0 < m < n^2, p * q = n, m, n, p, q > 0." << std::endl;
 		std::cout << "solve file_path | [-g m n p q] (-v): Solve a given puzzle. Either load a puzzle from a file via file_path, or generate a random puzzle via m, n, p, and q. Use -v to make the end report detailed." << std::endl;
-	}
-	else if(it->compare("test") == 0) {
-		++it;
-		if(it != inputs.end()) {
-			Reporter r;
-			std::string test = *it;
-			if(test.compare("1") == 0) {
-				/* Heuristic Analysis */
-				std::vector<std::string> paths;
-				for(int i = 0; i < 10; ++i) {
-					paths.push_back("../MonsterSudoku/inputs/2_test" + std::to_string(i + 1) + ".txt");
-				}
-				std::vector<Heuristics> heuristics;
-				heuristics.push_back(Heuristics(false, false, false, false, false, false));
-				heuristics.push_back(Heuristics(false, false, false, false, false, true));
-				heuristics.push_back(Heuristics(true, false, false, false, false, false));
-				heuristics.push_back(Heuristics(false, true, false, false, false, false));
-				heuristics.push_back(Heuristics(false, false, true, false, false, false));
-				heuristics.push_back(Heuristics(false, false, false, true, false, false));
-				heuristics.push_back(Heuristics(false, false, false, false, true, false));
-				heuristics.push_back(Heuristics(false, false, false, true, true, true));
-				heuristics.push_back(Heuristics(true, true, true, false, false, false));
-				heuristics.push_back(Heuristics(true, false, true, false, false, false));
-				heuristics.push_back(Heuristics(true, false, true, true, true, true));
-				heuristics.push_back(Heuristics(true, true, true, true, true, true));
-
-				std::vector<Report> reports;
-				for(std::size_t i = 0; i < heuristics.size(); ++i) {
-					reports.push_back(r.runHeuristicsAnalysis(paths, heuristics[i], 300));
-					std::cout << "For heuristic: " << heuristics[i] << std:: endl;
-					std::cout << reports[i] << std::endl;
-				}
-
-				std::ofstream out("../MonsterSudoku/inputs/2_results.txt");
-				if(out.is_open()) {
-					for(std::size_t i = 0; i < reports.size(); ++i) {
-						std::cout << "For heuristic: " << heuristics[i] << std:: endl;
-						std::cout << reports[i] << std::endl;
-						out << heuristics[i] << std::endl;
-						out << reports[i] << std::endl << std::endl;
-					}
-
-				}
-			}
-			else if(test.compare("2") == 0) {
-				/* Estimation of Hardest R9 */
-
-			}
-			else if(test.compare("3") == 0) {
-				/* Largest N Completable at the Hardest R9 */
-
-			}
-			else if(test.compare("4") == 0) {
-				/* Does Hardest R9 scale with Largest N */
-
-			}
-			else {
-
-			}
-		}
 	}
 	else {
 		return utils::Error::Unknown_Command;
